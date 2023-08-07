@@ -1,1 +1,3 @@
-# MonteCarloTrainer
+## MonteCarloTrainer
+
+Интерактивнgый тренажёр для изучения метода Монте-Карло.

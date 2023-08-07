@@ -2,10 +2,12 @@ import sys
 from os import getcwd
 from os.path import normpath, abspath, join, dirname
 
-__all__ = ['PATH']
+__all__ = ['STATE', 'PATH']
 
-FROZEN = getattr(sys, 'frozen', False)
-BUNDLED = FROZEN and getattr(sys, '_MEIPASS', None)
+
+class STATE:
+    FROZEN = getattr(sys, 'frozen', False)
+    BUNDLED = FROZEN and getattr(sys, '_MEIPASS', None)
 
 
 class PATH:

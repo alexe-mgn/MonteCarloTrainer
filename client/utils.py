@@ -1,39 +1,25 @@
-import sys
-from os import getcwd
 from os.path import normpath, abspath, join, dirname
+
+from common.utils import STATE as COMMON_STATE, PATH as COMMON_PATH
 
 __all__ = ['STATE', 'PATH']
 
-
-class STATE:
-    FROZEN = getattr(sys, 'frozen', False)
-    BUNDLED = FROZEN and getattr(sys, '_MEIPASS', None)
-    DEBUG = True
+COMMON_STATE.HAS_CLIENT = True
 
 
-class PATH:
-    EXECUTABLE = dirname(abspath(sys.argv[0]))
-    CWD = getcwd()
-    MEIPASS = getattr(sys, '_MEIPASS', EXECUTABLE)
-    # CONFIG = dirname(abspath(__file__))
-    CONFIG = MEIPASS
+class STATE(COMMON_STATE):
+    DEBUG = COMMON_STATE.DEBUG
 
-    LOAD = CONFIG
-    WRITE = EXECUTABLE
+
+class PATH(COMMON_PATH):
+    # CONFIG = MEIPASS
+
+    LOAD = COMMON_PATH.LOAD
+    # WRITE = EXECUTABLE
 
     UI = join(LOAD, normpath('gui/UI'))
     PLOT = join(LOAD, normpath('gui/plot'))
     PLOTLY_JS = join(PLOT, 'plotly.min.js')
     PLOT_HTML = join(PLOT, 'plot.html')
 
-    FILE = __file__
-
-    def __init__(self):
-        raise NotImplementedError('PATH is not instantiable')
-
-    @classmethod
-    def get(cls, *path, mode=None):
-        if mode is None:
-            return normpath(join(PATH.LOAD, *path))
-        else:
-            return normpath(join(getattr(cls, mode), *path))
+    UTILS_FILE = __file__

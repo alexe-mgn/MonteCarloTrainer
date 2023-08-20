@@ -186,7 +186,7 @@
      <item>
       <widget class="QGroupBox" name="widgetPoints">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -380,7 +380,7 @@
      <item>
       <widget class="QGroupBox" name="widgetIntegral">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -548,7 +548,7 @@
      <item>
       <widget class="QGroupBox" name="widgetMError">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">

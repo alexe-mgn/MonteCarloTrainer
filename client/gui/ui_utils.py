@@ -12,7 +12,7 @@ def compile_ui():
             proc = subprocess.run(['pyside6-uic', i.path], capture_output=True, check=True)
             path, _ = os.path.splitext(i.path)
             class_name = os.path.basename(path)
-            logging.getLogger('meta').info(f'Compiling ui class {class_name}')
+            logging.getLogger('client.meta').info(f'Compiling ui class {class_name}')
             with open(PATH.get(''.join((class_name, '.py')), mode='UI'), mode='wb') as f:
                 f.write(proc.stdout)
 

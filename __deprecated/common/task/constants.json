@@ -1,0 +1,59 @@
+{
+  "step": [
+    "start",
+    "rect",
+    "points",
+    "integral",
+    "error",
+    "end"
+  ],
+  "action": {
+    "rect": [
+      "X_0",
+      "X_1",
+      "Y_0",
+      "Y_1",
+      "COMPLETE"
+    ],
+    "points": [
+      "GENERATE",
+      "COUNT",
+      "COUNT_MISS",
+      "COUNT_HIT",
+      "COMPLETE"
+    ],
+    "integral": [
+      "AREA",
+      "HIT",
+      "POINTS",
+      "RESULT",
+      "COMPLETE"
+    ]
+  },
+  "error": {
+    "rect": [
+      "X_0",
+      "X_1",
+      "Y_0",
+      "Y_1",
+      "WRONG_STEP"
+    ],
+    "points": [
+      "COUNT_BEFORE_GENERATE",
+      "POINT",
+      "GENERATE_BEFORE_COUNT",
+      "COUNT",
+      "NOT_ENOUGH_POINTS",
+      "WRONG_STEP"
+    ],
+    "integral": [
+      "AREA",
+      "HIT",
+      "POINTS",
+      "RESULT",
+      "WRONG_STEP"
+    ]
+  }
+}
+
+

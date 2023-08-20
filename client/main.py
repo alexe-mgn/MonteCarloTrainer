@@ -3,7 +3,7 @@ import traceback
 
 def install(update=False):
     import logging
-    log = logging.getLogger('meta')
+    log = logging.getLogger('client.meta')
 
     from client.utils import STATE, PATH
 
@@ -16,15 +16,27 @@ def install(update=False):
     if not os.path.isfile(PATH.PLOTLY_JS):
         log.warning(f'Plotly JS file not found at "{PATH.PLOTLY_JS}".')
 
-    import plotly.offline
     if not os.path.isfile(PATH.PLOTLY_JS) or update:
-        log.warning(f'Downloading Plotly JS at "{PATH.PLOTLY_JS}".')
-        with open(PATH.PLOTLY_JS, mode='w', encoding='UTF-8') as f:
-            f.write(plotly.offline.get_plotlyjs())
+        try:
+            import plotly.offline
+            log.warning(f'Downloading Plotly JS at "{PATH.PLOTLY_JS}".')
+            with open(PATH.PLOTLY_JS, mode='w', encoding='UTF-8') as f:
+                f.write(plotly.offline.get_plotlyjs())
+        except:
+            log.exception(f'Failed downloading Plotly JS.')
 
 
 def run():
+    import client.log
+    # configure_logging()
+
+    import logging
     try:
+        from client.utils import STATE, PATH
+
+        STATE.log_debug()
+        PATH.log_debug()
+
         install()
 
         from PySide6.QtWidgets import QApplication
@@ -36,12 +48,11 @@ def run():
         mw.show()
 
         app.exec()
-    except Exception:
+    except:
+        logging.getLogger('client.app').exception("")
         traceback.print_exc()
-        from client.utils import PATH
-        for k in dir(PATH):
-            print(f'{k}\t=\t{getattr(PATH, k)}')
         input()
+        raise
 
 
 if __name__ == '__main__':

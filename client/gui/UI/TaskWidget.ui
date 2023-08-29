@@ -29,7 +29,56 @@
        </property>
        <layout class="QVBoxLayout" name="layoutTask">
         <item>
-         <widget class="QLabel" name="viewTask">
+         <layout class="QHBoxLayout" name="layoutTaskF" stretch="0,0,0">
+          <item>
+           <widget class="QLabel" name="labelTaskF">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Дана функция y=</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="viewTaskF">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Function</string>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="spacerTaskF">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QLabel" name="viewTaskInterval">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
             <horstretch>0</horstretch>
@@ -37,7 +86,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Дана функция: {f}.&lt;br/&gt;Используя метод Монте-Карло приблизительно вычислите её определённый интеграл на отрезке [{a},&amp;nbsp;{b}].&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Используя метод Монте-Карло приблизительно вычислите её определённый интеграл на отрезке [{a}, {b}].&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="textFormat">
            <enum>Qt::RichText</enum>
@@ -53,10 +102,16 @@
      <item>
       <widget class="QWebEngineView" name="viewPlot">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>400</width>
+         <height>400</height>
+        </size>
        </property>
        <property name="url">
         <url>
@@ -81,13 +136,16 @@
         <string>Определение прямоугольника</string>
        </property>
        <layout class="QGridLayout" name="gridLayout">
-        <item row="1" column="2">
-         <widget class="QDoubleSpinBox" name="inputRectY2">
+        <item row="0" column="2">
+         <widget class="QDoubleSpinBox" name="inputRectX2">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="autoFillBackground">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -98,6 +156,22 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="autoFillBackground">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <widget class="QDoubleSpinBox" name="inputRectY2">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="autoFillBackground">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -135,15 +209,8 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
-         </widget>
-        </item>
-        <item row="0" column="2">
-         <widget class="QDoubleSpinBox" name="inputRectX2">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
+          <property name="autoFillBackground">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -172,6 +239,9 @@
             </property>
             <property name="layoutDirection">
              <enum>Qt::LeftToRight</enum>
+            </property>
+            <property name="autoFillBackground">
+             <bool>true</bool>
             </property>
             <property name="text">
              <string>Далее</string>
@@ -231,6 +301,9 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="autoFillBackground">
+           <bool>true</bool>
           </property>
           <property name="text">
            <string>Точка ниже</string>
@@ -310,6 +383,9 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="autoFillBackground">
+           <bool>true</bool>
+          </property>
           <property name="text">
            <string>Точка выше</string>
           </property>
@@ -337,6 +413,9 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="autoFillBackground">
+             <bool>true</bool>
             </property>
             <property name="text">
              <string>Сгенерировать точку</string>
@@ -366,6 +445,9 @@
             </property>
             <property name="layoutDirection">
              <enum>Qt::LeftToRight</enum>
+            </property>
+            <property name="autoFillBackground">
+             <bool>true</bool>
             </property>
             <property name="text">
              <string>Закончить</string>
@@ -408,10 +490,18 @@
            </widget>
           </item>
           <item row="1" column="0" rowspan="3">
-           <widget class="QDoubleSpinBox" name="inputIntArea"/>
+           <widget class="QDoubleSpinBox" name="inputIntArea">
+            <property name="autoFillBackground">
+             <bool>true</bool>
+            </property>
+           </widget>
           </item>
           <item row="1" column="2">
-           <widget class="QSpinBox" name="inputIntHit"/>
+           <widget class="QSpinBox" name="inputIntHit">
+            <property name="autoFillBackground">
+             <bool>true</bool>
+            </property>
+           </widget>
           </item>
           <item row="1" column="4" rowspan="3">
            <widget class="QLabel" name="viewIntResult">
@@ -444,6 +534,9 @@
           </item>
           <item row="3" column="2">
            <widget class="QSpinBox" name="inputIntAll">
+            <property name="autoFillBackground">
+             <bool>true</bool>
+            </property>
             <property name="minimum">
              <number>1</number>
             </property>
@@ -525,6 +618,9 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="autoFillBackground">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item>
@@ -534,6 +630,9 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="autoFillBackground">
+             <bool>true</bool>
             </property>
             <property name="text">
              <string>Далее</string>
@@ -560,6 +659,19 @@
         <string>Определение погрешности</string>
        </property>
       </widget>
+     </item>
+     <item>
+      <spacer name="spacerTaskControls">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
      </item>
     </layout>
    </item>

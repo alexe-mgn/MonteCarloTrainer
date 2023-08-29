@@ -1,11 +1,27 @@
 import functools
 import time
+from typing import Self
 
-from common.task.utils import STEP, ERROR, ERRORS
+from common.task.utils import STEP, ACTION, ERROR, ERRORS
 from client.task.exceptions import TaskError
 from client.task.Task import Task, Interval
 
 Point = tuple[float, float]
+
+
+class _ActionFunc:
+
+    def __init__(self, func, action: ACTION):
+        self.func = func
+        self._action = action
+        functools.update_wrapper(self, func)
+
+    @property
+    def action(self):
+        return self._action
+
+    def __call__(self, *args, **kwargs):
+        self.func(*args, **kwargs)
 
 
 class TaskSession:
@@ -34,13 +50,21 @@ class TaskSession:
 
     def raise_for_step(self, step: STEP, code: ERROR):
         if self._step is not step:
-            raise TaskError(self._step, code)
+            raise TaskError(code)
 
     @staticmethod
-    def check_step(step: STEP, error: ERROR):
+    def _action(action: ACTION):
+
+        def decorator(func):
+            return _ActionFunc(func, action)
+
+        return decorator
+
+    @staticmethod
+    def _check_step(step: STEP, error: ERROR):
         def decorator(func):
             @functools.wraps(func)
-            def wrapper(self, *args, **kwargs):
+            def wrapper(self: Self, *args, **kwargs):
                 self.raise_for_step(step, error)
                 return func(self, *args, **kwargs)
 
@@ -63,7 +87,7 @@ class TaskSession:
             self._time['end'] = time.time()
 
     def next_step(self):
-        error = TaskError(self._step)
+        error = TaskError()
         nxt = None
         match self._step:
             case STEP.START:
@@ -90,9 +114,10 @@ class TaskSession:
     def int_x(self) -> Interval | None:
         return self._int_x
 
-    @check_step(STEP.RECT, ERRORS.RECT.WRONG_STEP)
+    @_check_step(STEP.RECT, ERRORS.RECT.WRONG_STEP)
+    @_action(ACTION.X_0 | ACTION.X_1)
     def set_int_x(self, interval: Interval):
-        error = TaskError(self._step)
+        error = TaskError()
         if interval[0] != self._task.interval[0]:
             error |= ERRORS.RECT.X_0
         if interval[1] != self._task.interval[1]:
@@ -105,9 +130,10 @@ class TaskSession:
     def int_y(self) -> Interval | None:
         return self._int_y
 
-    @check_step(STEP.RECT, ERRORS.RECT.WRONG_STEP)
+    @_check_step(STEP.RECT, ERRORS.RECT.WRONG_STEP)
+    @_action(ACTION.Y_0 | ACTION.Y_1)
     def set_int_y(self, interval: Interval):
-        error = TaskError(self._step)
+        error = TaskError()
         if interval[0] != self._task.interval[0]:  # TODO y checks
             error |= ERRORS.RECT.Y_0
         if interval[1] != self._task.interval[1]:
@@ -123,27 +149,29 @@ class TaskSession:
     def point_hits(self) -> list[bool]:
         return list(self._points_hit)
 
-    @check_step(STEP.POINTS, ERRORS.POINTS.WRONG_STEP)
+    @_check_step(STEP.POINTS, ERRORS.POINTS.WRONG_STEP)
+    @_action(ACTION.GENERATE)
     def generate_point(self, p: Point):
         if not self._point_counted:
-            raise TaskError(self._step, ERRORS.POINTS.GENERATE_BEFORE_COUNT)
+            raise TaskError(ERRORS.POINTS.GENERATE_BEFORE_COUNT)
         else:
             if not (self._int_x[0] <= p[0] <= self._int_x[1] and self._int_y[0] <= p[1] <= self._int_y[1]):
-                raise TaskError(self._step, ERRORS.POINTS.POINT)
+                raise TaskError(ERRORS.POINTS.POINT)
             else:
                 self._points.append(tuple(p))
                 self._point_counted = False
 
-    @check_step(STEP.POINTS, ERRORS.POINTS.WRONG_STEP)
+    @_check_step(STEP.POINTS, ERRORS.POINTS.WRONG_STEP)
+    @_action(ACTION.COUNT)
     def count_point(self, hit: bool):
         if self._point_counted:
-            raise TaskError(self._step, ERRORS.POINTS.COUNT_BEFORE_GENERATE)
+            raise TaskError(ERRORS.POINTS.COUNT_BEFORE_GENERATE)
         else:
             p = self._points[-1]
             y_f = self._task.f(p[0])
             hit_real = p[1] <= y_f
             if hit != hit_real:
-                raise TaskError(self._step, ERRORS.POINTS.COUNT)
+                raise TaskError(ERRORS.POINTS.COUNT)
             else:
                 self._points_hit.append(hit_real)
                 self._point_counted = True

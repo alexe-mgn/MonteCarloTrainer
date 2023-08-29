@@ -1,4 +1,4 @@
 build
 dist
-/gui/UI/TaskWidget.py
+/gui/UI/*.py
 /gui/plot/plotly.min.js

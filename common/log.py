@@ -17,7 +17,7 @@ def configure_logging():
     logging.getLogger('meta').setLevel(LOG_STATE.LEVEL)
 
     LOG_STATE.INIT = True
-    logging.getLogger('meta').info(f"Configured logging.")
+    logging.getLogger().info(f"Configured logging.")
 
 
 configure_logging()

@@ -1,18 +1,28 @@
 from typing import Self
 
-from common.task.utils import STEP, ERROR
+from common.task.utils import STEP, ACTION, ERROR
 
 
 class TaskError(Exception):
 
-    def __init__(self, step: STEP = None, error: ERROR = 0):
+    def __init__(self, code: ERROR = ERROR(0), action: ACTION = ACTION(0)):
         super().__init__()
-        self._step = step
-        self._error = error
+        self.code = code
+        self.action = action
 
     def __bool__(self):
-        return bool(self._error)
+        return bool(self.code)
 
     def __ior__(self, other: ERROR | Self):
-        other_error = other._error if isinstance(other, self.__class__) else other
-        self._error |= other_error
+        if isinstance(other, self.__class__):
+            self.code |= other.code
+            self.action |= other.action
+        else:
+            self.code |= other
+        return self
+
+    def __contains__(self, item: ERROR):
+        return item in self.code
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.code}, {self.action})"

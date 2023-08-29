@@ -15,8 +15,9 @@ def configure_logging():
     LOG_STATE.LEVEL = logging.DEBUG if STATE.DEBUG else logging.INFO
     logging.basicConfig(format='%(levelname)s:%(name)s: %(asctime)s : %(message)s')
     logging.getLogger('client').setLevel(LOG_STATE.LEVEL)
-    logging.getLogger('client.meta').setLevel(LOG_STATE.LEVEL)
-    logging.getLogger('client.app').setLevel(LOG_STATE.LEVEL)
+    # logging.getLogger('client.meta').setLevel(LOG_STATE.LEVEL)
+    # logging.getLogger('client.app').setLevel(LOG_STATE.LEVEL)
+    logging.getLogger('client.ui').setLevel(logging.INFO)
 
     LOG_STATE.INIT = True
     logging.getLogger('client').info(f"Configured logging.")

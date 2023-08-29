@@ -18,10 +18,17 @@ def install(update=False):
 
     if not os.path.isfile(PATH.PLOTLY_JS) or update:
         try:
-            import plotly.offline
-            log.warning(f'Downloading Plotly JS at "{PATH.PLOTLY_JS}".')
-            with open(PATH.PLOTLY_JS, mode='w', encoding='UTF-8') as f:
-                f.write(plotly.offline.get_plotlyjs())
+            try:
+                log.warning(f'Downloading Plotly JS at "{PATH.PLOTLY_JS}" with plotly lib.')
+                import plotly.offline
+                with open(PATH.PLOTLY_JS, mode='w', encoding='UTF-8') as f:
+                    f.write(plotly.offline.get_plotlyjs())
+            except:
+                log.exception('')
+                log.warning(f'Failed downloading Plotly JS with plotly lib, falling back to CDN download.')
+
+                from urllib import request
+                request.urlretrieve('https://cdn.plot.ly/plotly-2.25.2.min.js', PATH.PLOTLY_JS)
         except:
             log.exception(f'Failed downloading Plotly JS.')
 
@@ -40,11 +47,11 @@ def run():
         install()
 
         from PySide6.QtWidgets import QApplication
-        from client.gui.TaskWidget import TaskWidget
+        from client.gui.MainWindow import MainWindow
 
         app = QApplication([])
 
-        mw = TaskWidget()
+        mw = MainWindow()
         mw.show()
 
         app.exec()

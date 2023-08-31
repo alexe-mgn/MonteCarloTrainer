@@ -111,6 +111,7 @@ class TaskSession:
         elif nxt is not None:
             self._step = nxt
 
+    @property
     def int_x(self) -> Interval | None:
         return self._int_x
 
@@ -127,6 +128,7 @@ class TaskSession:
         else:
             self._int_x = tuple(interval)
 
+    @property
     def int_y(self) -> Interval | None:
         return self._int_y
 
@@ -143,11 +145,17 @@ class TaskSession:
         else:
             self._int_y = tuple(interval)
 
+    @property
     def points(self) -> list[Point]:
         return list(self._points)
 
+    @property
     def point_hits(self) -> list[bool]:
         return list(self._points_hit)
+
+    @property
+    def point_counted(self) -> bool:
+        return self._point_counted
 
     @_check_step(STEP.POINTS, ERRORS.POINTS.WRONG_STEP)
     @_action(ACTION.GENERATE)
@@ -171,7 +179,10 @@ class TaskSession:
             y_f = self._task.f(p[0])
             hit_real = p[1] <= y_f
             if hit != hit_real:
-                raise TaskError(ERRORS.POINTS.COUNT)
+                raise TaskError(ERRORS.POINTS.COUNT |
+                                (ERRORS.POINTS.COUNT_HIT if
+                                 hit else
+                                 ERRORS.POINTS.COUNT_MISS))
             else:
                 self._points_hit.append(hit_real)
                 self._point_counted = True

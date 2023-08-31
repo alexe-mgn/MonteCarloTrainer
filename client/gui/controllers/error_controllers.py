@@ -27,6 +27,13 @@ class ErrorWidgetController(ErrorViewController):
         self._error = state
 
 
+class ErrorDisablerController(ErrorWidgetController):
+
+    def set_error_state(self, state: bool = True):
+        super().set_error_state(state)
+        self.widget().setEnabled(not state)
+
+
 class ErrorPaletteController(ErrorWidgetController):
     PALETTE_ERROR = QPalette()
     PALETTE_HINT = QPalette()
@@ -70,6 +77,13 @@ class ErrorPaletteController(ErrorWidgetController):
             self._palette = self.widget().palette()
         super().set_error_state(state)
         self.widget().setPalette(self.state_palette())
+
+
+class ErrorPaletteDisablerController(ErrorPaletteController, ErrorDisablerController):
+
+    def set_error_state(self, state: bool = True):
+        super(self.__class__, self).set_error_state(state)
+        super(self.__class__.__base__, self).set_error_state(state)
 
 
 class ErrorMultiController(ErrorViewController):

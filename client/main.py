@@ -33,6 +33,19 @@ def install(update=False):
             log.exception(f'Failed downloading Plotly JS.')
 
 
+def _test(mw):
+    from client.gui.MainWindow import MainWindow
+    mw: MainWindow
+
+    mw.choice_widget.inputF.setText('0.5x+1')
+    mw.choice_widget.inputStart.setValue(0)
+    mw.choice_widget.inputEnd.setValue(10)
+    mw.start_task()
+
+    mw.task_widget.inputRectX2.setValue(10)
+    mw.task_widget.inputRectY2.setValue(10)
+
+
 def run():
     import client.log
     # configure_logging()
@@ -53,6 +66,9 @@ def run():
 
         mw = MainWindow()
         mw.show()
+
+        if STATE.DEBUG:
+            _test(mw)
 
         app.exec()
     except:

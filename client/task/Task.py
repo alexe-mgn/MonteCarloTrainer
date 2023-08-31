@@ -6,6 +6,7 @@ from sympy.parsing.sympy_parser import *
 from client.exceptions import AppError
 
 Interval = tuple[float, float]
+Function = Callable[[float], float]
 
 
 class Task:
@@ -25,15 +26,18 @@ class Task:
         self._f_expr = f
         self._f_sym = f.free_symbols.pop() if f.free_symbols else sympy.Symbol('x')
         self._f_eval = sympy.lambdify(self._f_sym, f)
-        self._interval = tuple(interval)
+        self._interval = tuple(interval)  # TODO Comparison
 
     @property
     def f_expr(self) -> sympy.Expr:
         return self._f_expr
 
+    def f_call(self, x: float) -> float:
+        return float(self._f_eval(x))
+
     @property
-    def f(self) -> Callable[[float], float]:  # TODO Vectorized
-        return self._f_eval
+    def f(self) -> Function:
+        return self.f_call
 
     @property
     def interval(self) -> Interval:

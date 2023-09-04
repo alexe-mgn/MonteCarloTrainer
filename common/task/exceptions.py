@@ -1,6 +1,6 @@
 from typing import Self
 
-from common.task.utils import STEP, ACTION, ERROR
+from common.task.const import ACTION, ERROR
 
 
 class TaskError(Exception):

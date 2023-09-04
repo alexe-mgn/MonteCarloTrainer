@@ -26,6 +26,7 @@ class ACTION(Flag):
     AREA = auto(), STEP.INTEGRAL
     HIT = auto(), STEP.INTEGRAL
     POINTS = auto(), STEP.INTEGRAL
+    NEGATIVE = auto(), STEP.INTEGRAL
     RESULT = auto(), STEP.INTEGRAL
     INTEGRAL_COMPLETE = auto(), STEP.INTEGRAL
 
@@ -56,6 +57,7 @@ class ERROR(Flag):
     AREA = auto(), STEP.INTEGRAL, ACTION.AREA
     HIT = auto(), STEP.INTEGRAL, ACTION.HIT
     POINTS = auto(), STEP.INTEGRAL, ACTION.POINTS
+    NEGATIVE = auto(), STEP.INTEGRAL, ACTION.NEGATIVE
     RESULT = auto(), STEP.INTEGRAL, ACTION.RESULT
     INTEGRAL_WRONG_STEP = auto(), STEP.INTEGRAL
 
@@ -90,5 +92,10 @@ class ERRORS:
         AREA = ERROR.AREA
         HIT = ERROR.HIT
         POINTS = ERROR.POINTS
+        NEGATIVE = ERROR.NEGATIVE
         RESULT = ERROR.RESULT
         WRONG_STEP = ERROR.INTEGRAL_WRONG_STEP
+
+
+Interval = tuple[float, float]
+Point = tuple[float, float]

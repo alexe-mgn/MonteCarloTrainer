@@ -1,121 +1,169 @@
-import functools
-import time
 from typing import Self
+import functools
 
-from common.task.utils import STEP, ACTION, ERROR, ERRORS
-from client.task.exceptions import TaskError
-from client.task.Task import Task, Interval
+import time
 
-Point = tuple[float, float]
-
-
-class _ActionFunc:
-
-    def __init__(self, func, action: ACTION):
-        self.func = func
-        self._action = action
-        functools.update_wrapper(self, func)
-
-    @property
-    def action(self):
-        return self._action
-
-    def __call__(self, *args, **kwargs):
-        self.func(*args, **kwargs)
+from common.task.const import STEP, ACTION, ERROR, ERRORS, Interval, Point
+from common.task.data import TaskState, TaskStats
+from common.task.exceptions import TaskError
+from client.task.Task import Task
 
 
 class TaskSession:
+    _RESOLUTION = 1000
+
+    accuracy = 0.01
+    y_accuracy = 0.1
+    min_points = 10
 
     def __init__(self, task: Task):
         self._task = task
 
-        self._step = STEP.START
+        self._state = TaskState()
+        self._stats = TaskStats(state=self._state)
 
-        self._time = {}
-
-        self._int_x: Interval | None = None
-        self._int_y: Interval | None = None
-
-        self._points = []
-        self._points_hit = []
-        self._point_counted = True
+        self._f_min = None
+        self._f_max = None
+        start = self._task.interval[0]
+        dist = self._task.interval[1] - self._task.interval[0]
+        for i in range(self._RESOLUTION):
+            x = start + dist * (i / self._RESOLUTION)
+            y = self.task.f(x)
+            if self._f_min is None or y < self._f_min:
+                self._f_min = y
+            if self._f_max is None or y > self._f_max:
+                self._f_max = y
 
     @property
     def task(self):
         return self._task
 
     @property
+    def state(self):
+        """
+        IMMUTABLE
+        :return:
+        """
+        return self._state
+
+    def compare(self, trying: float, correct: float):
+        return abs(correct - trying) / correct <= self.accuracy if correct != 0 else trying == correct
+
+    @property
+    def f_min(self):
+        return self._f_min
+
+    @property
+    def f_max(self):
+        return self._f_max
+
+    @property
     def step(self):
-        return self._step
+        return self._state.step
 
     def raise_for_step(self, step: STEP, code: ERROR):
-        if self._step is not step:
+        if self._state.step is not step:
             raise TaskError(code)
 
     @staticmethod
     def _action(action: ACTION):
 
         def decorator(func):
-            return _ActionFunc(func, action)
-
-        return decorator
-
-    @staticmethod
-    def _check_step(step: STEP, error: ERROR):
-        def decorator(func):
             @functools.wraps(func)
             def wrapper(self: Self, *args, **kwargs):
-                self.raise_for_step(step, error)
-                return func(self, *args, **kwargs)
+                res = func(self, *args, **kwargs)
+                self._record_action(action, args, kwargs)
+                self._notify_action(action, args, kwargs)
+                return res
 
             return wrapper
 
         return decorator
 
+    def _record_action(self, action: ACTION, args: tuple, kwargs: dict):
+        self._stats.append_action(action, args, kwargs)
+
+    def _notify_action(self, action: ACTION, args: tuple, kwargs: dict):
+        pass
+
+    @staticmethod
+    def _check_error(step: STEP, code: ERROR):
+        def decorator(func):
+            @functools.wraps(func)
+            def wrapper(self: Self, *args, **kwargs):
+                try:
+                    self.raise_for_step(step, code)
+                    return func(self, *args, **kwargs)
+                except TaskError as error:
+                    self._record_error(error, args, kwargs)
+                    self._notify_error(error, args, kwargs)
+
+            return wrapper
+
+        return decorator
+
+    def _record_error(self, error: TaskError, args: tuple, kwargs: dict):
+        self._stats.append_error(error, args, kwargs)
+
+    def _notify_error(self, error: TaskError, args: tuple, kwargs: dict):
+        raise error
+
     def start(self):
-        if self._step is not STEP.START:
-            raise UserWarning(f"{self} is already started at {self._time.get('start', None)}.")
+        if self._state.step is not STEP.START:
+            raise UserWarning(f"{self} is already started at {self._stats.step_time.get(STEP.START, None)}.")
         else:
-            self._step = STEP.RECT
-            self._time['start'] = time.time()
+            self.next_step()
 
     def end(self):
-        if self._step is STEP.END:
-            raise UserWarning(f"{self} is already finished at {self._time.get('end', None)}")
+        if self._state.step is STEP.END:
+            raise UserWarning(f"{self} is already finished at {self._stats.step_time.get(STEP.END, None)}")
         else:
-            self._step = STEP.END
-            self._time['end'] = time.time()
+            self._state.step = STEP.END
+            self._stats.step_time[STEP.END] = time.time()
 
     def next_step(self):
+        state = self._state
+
         error = TaskError()
-        nxt = None
-        match self._step:
+        # nxt = None
+        match state.step:
             case STEP.START:
-                self.start()
-            case STEP.RECT:  # TODO checks
-                if self._int_x is None:
+                nxt = STEP.RECT
+            case STEP.RECT:
+                if state.int_x is None:
                     error |= ERRORS.RECT.X_0 | ERRORS.RECT.X_1
-                if self._int_y is None:
+                if state.int_y is None:
                     error |= ERRORS.RECT.Y_0 | ERRORS.RECT.Y_1
                 nxt = STEP.POINTS
             case STEP.POINTS:
+                if not state.point_counted:
+                    error |= ERRORS.POINTS.COMPLETE_BEFORE_COUNT
+                elif len(state.points) < self.min_points:
+                    error |= ERRORS.POINTS.NOT_ENOUGH_POINTS
                 nxt = STEP.INTEGRAL
             case STEP.INTEGRAL:
-                nxt = STEP.ERROR
+                for v, e in zip(
+                        (state.rect_area, state.n_points_hit, state.n_points_all, state.rect_negative,
+                         state.result),
+                        (ERRORS.INTEGRAL.AREA, ERRORS.INTEGRAL.HIT, ERRORS.INTEGRAL.POINTS, ERRORS.INTEGRAL.NEGATIVE,
+                         ERRORS.INTEGRAL.RESULT)
+                ):
+                    if v is None:
+                        error |= e
+                nxt = STEP.END
             case STEP.ERROR:
-                self.end()
+                raise NotImplementedError(f"{self} doesn't implement step {STEP.ERROR}")
+                # self.end()
             case _:
-                raise RuntimeError(f"{self} can't switch from step {self._step}")
+                raise RuntimeError(f"{self} can't switch from step {state.step}")
         if error:
             raise error
         elif nxt is not None:
-            self._step = nxt
+            if nxt != state.step:
+                self._stats.step_time[nxt] = time.time()
+            state.step = nxt
 
-    @property
-    def int_x(self) -> Interval | None:
-        return self._int_x
-
-    @_check_step(STEP.RECT, ERRORS.RECT.WRONG_STEP)
+    @_check_error(STEP.RECT, ERRORS.RECT.WRONG_STEP)
     @_action(ACTION.X_0 | ACTION.X_1)
     def set_int_x(self, interval: Interval):
         error = TaskError()
@@ -126,56 +174,44 @@ class TaskSession:
         if error:
             raise error
         else:
-            self._int_x = tuple(interval)
+            self._state.int_x = tuple(interval)
 
-    @property
-    def int_y(self) -> Interval | None:
-        return self._int_y
-
-    @_check_step(STEP.RECT, ERRORS.RECT.WRONG_STEP)
+    @_check_error(STEP.RECT, ERRORS.RECT.WRONG_STEP)
     @_action(ACTION.Y_0 | ACTION.Y_1)
     def set_int_y(self, interval: Interval):
         error = TaskError()
-        if interval[0] != self._task.interval[0]:  # TODO y checks
+        y_allowed_error = (self._f_max - self._f_min) * self.y_accuracy
+        y_min = min(self._f_min, 0)
+        if not y_min - y_allowed_error <= interval[0] <= y_min:
             error |= ERRORS.RECT.Y_0
-        if interval[1] != self._task.interval[1]:
+        y_max = max(self._f_max, 0)
+        if not y_max <= interval[1] <= y_max + y_allowed_error:
             error |= ERRORS.RECT.Y_1
         if error:
             raise error
         else:
-            self._int_y = tuple(interval)
+            self._state.int_y = tuple(interval)
 
-    @property
-    def points(self) -> list[Point]:
-        return list(self._points)
-
-    @property
-    def point_hits(self) -> list[bool]:
-        return list(self._points_hit)
-
-    @property
-    def point_counted(self) -> bool:
-        return self._point_counted
-
-    @_check_step(STEP.POINTS, ERRORS.POINTS.WRONG_STEP)
+    @_check_error(STEP.POINTS, ERRORS.POINTS.WRONG_STEP)
     @_action(ACTION.GENERATE)
     def generate_point(self, p: Point):
-        if not self._point_counted:
+        if not self._state.point_counted:
             raise TaskError(ERRORS.POINTS.GENERATE_BEFORE_COUNT)
         else:
-            if not (self._int_x[0] <= p[0] <= self._int_x[1] and self._int_y[0] <= p[1] <= self._int_y[1]):
+            if not (self._state.int_x[0] <= p[0] <= self._state.int_x[1] and self._state.int_y[0] <= p[1] <=
+                    self._state.int_y[1]):
                 raise TaskError(ERRORS.POINTS.POINT)
             else:
-                self._points.append(tuple(p))
-                self._point_counted = False
+                self._state.points.append(tuple(p))
+                self._state.point_counted = False
 
-    @_check_step(STEP.POINTS, ERRORS.POINTS.WRONG_STEP)
+    @_check_error(STEP.POINTS, ERRORS.POINTS.WRONG_STEP)
     @_action(ACTION.COUNT)
     def count_point(self, hit: bool):
-        if self._point_counted:
+        if self._state.point_counted:
             raise TaskError(ERRORS.POINTS.COUNT_BEFORE_GENERATE)
         else:
-            p = self._points[-1]
+            p = self._state.points[-1]
             y_f = self._task.f(p[0])
             hit_real = p[1] <= y_f
             if hit != hit_real:
@@ -184,8 +220,61 @@ class TaskSession:
                                  hit else
                                  ERRORS.POINTS.COUNT_MISS))
             else:
-                self._points_hit.append(hit_real)
-                self._point_counted = True
+                self._state.point_hits.append(hit_real)
+                self._state.point_counted = True
+
+    @_check_error(STEP.INTEGRAL, ERRORS.INTEGRAL.WRONG_STEP)
+    @_action(ACTION.AREA)
+    def set_rect_area(self, area: float):
+        int_x, int_y = self._state.int_x, self._state.int_y
+        if not self.compare(area, (int_x[1] - int_x[0]) * (int_y[1] - int_y[0])):
+            raise TaskError(ERRORS.INTEGRAL.AREA)
+        self._state.rect_area = area
+
+    @_check_error(STEP.INTEGRAL, ERRORS.INTEGRAL.WRONG_STEP)
+    @_action(ACTION.HIT)
+    def set_points_hit(self, n: int):
+        if n != sum(self._state.point_hits):
+            raise TaskError(ERRORS.INTEGRAL.HIT)
+        self._state.n_points_hit = n
+
+    @_check_error(STEP.INTEGRAL, ERRORS.INTEGRAL.WRONG_STEP)
+    @_action(ACTION.POINTS)
+    def set_points_all(self, n: int):
+        if n != len(self._state.points):
+            raise TaskError(ERRORS.INTEGRAL.POINTS)
+        self._state.n_points_all = n
+
+    @_check_error(STEP.INTEGRAL, ERROR.INTEGRAL_WRONG_STEP)
+    @_action(ACTION.NEGATIVE)
+    def set_rect_negative(self, area: float):
+        int_x, int_y = self._state.int_x, self._state.int_y
+        error = TaskError(ERRORS.INTEGRAL.NEGATIVE)
+        if int_y[0] >= 0:
+            if area != 0:
+                raise error
+        else:
+            if not self.compare(area, (int_x[1] - int_x[0]) * -int_y[0]):
+                raise error
+        self._state.rect_negative = area
+
+    @_check_error(STEP.INTEGRAL, ERRORS.INTEGRAL.WRONG_STEP)
+    @_action(ACTION.RESULT)
+    def set_result(self, res: float):
+        state = self._state
+        error = TaskError()
+        for v, e in zip(
+                (state.rect_area, state.n_points_hit, state.n_points_all, state.rect_negative),
+                (ERRORS.INTEGRAL.AREA, ERRORS.INTEGRAL.HIT, ERRORS.INTEGRAL.POINTS, ERRORS.INTEGRAL.NEGATIVE)
+        ):
+            if v is None:
+                error |= e
+        if error:
+            raise error
+        elif not self.compare(res, state.rect_area * (state.n_points_hit / state.n_points_all) - state.rect_negative):
+            raise TaskError(ERRORS.INTEGRAL.RESULT)
+        else:
+            state.result = res
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self._task}, step={self._step})"
+        return f"{self.__class__.__name__}({self._task}, step={self._state.step})"

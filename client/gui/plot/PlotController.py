@@ -7,7 +7,7 @@ from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import QMainWindow
 
 from client.task.Task import Function, Task
-from client.task.TaskSession import Point
+from common.task.const import Point
 from client.utils import STATE, PATH
 
 
@@ -35,7 +35,6 @@ class PlotController(QObject):
     def is_loaded(self) -> bool:
         return self._plot_page.is_loaded
 
-    # @staticmethod
     def _resize_event(self, event: QEvent.Type.Resize):
         # self._view.page().runJavaScript('adjustSize()')
         ...
@@ -49,6 +48,9 @@ class PlotController(QObject):
         self._view.setPage(self._plot_page)
         self._view.page().javaScriptConsoleMessage = self._javascript_console_message
         self._view.resizeEvent = self._resize_event
+
+    def reset_data(self):
+        self._plot_page.reset_data()
 
     def update_plot(self):
         self._plot_page.update_plot()

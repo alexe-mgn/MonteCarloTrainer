@@ -39,6 +39,7 @@ let plot_rect_data = {
 }
 let plot_layout = {
     showlegend: false,
+    margin: {l: 0, r: 0, b: 0, t: 0, pad: 0},
     // autosize: true,
     shapes: [
         plot_rect_data

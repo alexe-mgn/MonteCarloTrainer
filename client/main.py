@@ -37,13 +37,25 @@ def _test(mw):
     from client.gui.MainWindow import MainWindow
     mw: MainWindow
 
-    mw.choice_widget.inputF.setText('0.5x+1')
-    mw.choice_widget.inputStart.setValue(0)
-    mw.choice_widget.inputEnd.setValue(10)
+    cw = mw.choice_widget
+    cw.inputF.setText('0.5x+1')
+    cw.inputStart.setValue(0)
+    cw.inputEnd.setValue(10)
     mw.start_task()
 
-    mw.task_widget.inputRectX2.setValue(10)
-    mw.task_widget.inputRectY2.setValue(10)
+    tw = mw.task_widget
+    tw.inputRectX1.setValue(0)
+    tw.inputRectX2.setValue(10)
+    tw.inputRectY1.setValue(0)
+    tw.inputRectY2.setValue(6)
+    tw.buttonRectComplete.click()
+
+    for _ in range(150):
+        tw.buttonPointsGenerate.click()
+        p = tw._task_session.state.points[-1]
+        b = tw.buttonPointsMiss if p[1] >= tw._task_session.task.f(p[0]) else tw.buttonPointsHit
+        b.click()
+    # tw.buttonPointsComplete.click()
 
 
 def run():

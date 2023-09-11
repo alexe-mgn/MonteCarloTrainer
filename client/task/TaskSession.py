@@ -19,9 +19,6 @@ class TaskSession:
     def __init__(self, task: Task):
         self._task = task
 
-        self._state = TaskState()
-        self._stats = TaskStats(state=self._state)
-
         self._f_min = None
         self._f_max = None
         start = self._task.interval[0]
@@ -34,6 +31,15 @@ class TaskSession:
             if self._f_max is None or y > self._f_max:
                 self._f_max = y
 
+        self._state = self._create_state()
+        self._stats = self._create_stats()
+
+    def _create_state(self) -> TaskState:
+        return TaskState()
+
+    def _create_stats(self) -> TaskStats:
+        return TaskStats(self._state)
+
     @property
     def task(self):
         return self._task
@@ -45,6 +51,14 @@ class TaskSession:
         :return:
         """
         return self._state
+
+    @property
+    def stats(self):
+        """
+        IMMUTABLE
+        :return:
+        """
+        return self._stats
 
     def compare(self, trying: float, correct: float):
         return abs(correct - trying) / correct <= self.accuracy if correct != 0 else trying == correct
@@ -87,26 +101,28 @@ class TaskSession:
         pass
 
     @staticmethod
-    def _check_error(step: STEP, code: ERROR):
+    def _check_error(step: STEP | None = None, code: ERROR = ERROR(0)):
         def decorator(func):
             @functools.wraps(func)
             def wrapper(self: Self, *args, **kwargs):
                 try:
-                    self.raise_for_step(step, code)
+                    if step is not None:
+                        self.raise_for_step(step, code)
                     return func(self, *args, **kwargs)
                 except TaskError as error:
-                    self._record_error(error, args, kwargs)
-                    self._notify_error(error, args, kwargs)
+                    self._record_error(error.code, args, kwargs)
+                    self._notify_error(error.code, args, kwargs)
 
             return wrapper
 
         return decorator
 
-    def _record_error(self, error: TaskError, args: tuple, kwargs: dict):
-        self._stats.append_error(error, args, kwargs)
+    def _record_error(self, error: ERROR, args: tuple, kwargs: dict):
+        self._stats.append_error(error, args, kwargs)  # TODO Resolve zero error.
 
-    def _notify_error(self, error: TaskError, args: tuple, kwargs: dict):
-        raise error
+    def _notify_error(self, error: ERROR, args: tuple, kwargs: dict):
+        if error:
+            raise TaskError(error)
 
     def start(self):
         if self._state.step is not STEP.START:
@@ -118,9 +134,12 @@ class TaskSession:
         if self._state.step is STEP.END:
             raise UserWarning(f"{self} is already finished at {self._stats.step_time.get(STEP.END, None)}")
         else:
-            self._state.step = STEP.END
             self._stats.step_time[STEP.END] = time.time()
+            self._state.step = STEP.END
+            self._record_action(ACTION.END, (), {})
+            self._notify_action(ACTION.END, (), {})
 
+    @_check_error()
     def next_step(self):
         state = self._state
 
@@ -129,18 +148,21 @@ class TaskSession:
         match state.step:
             case STEP.START:
                 nxt = STEP.RECT
+                action = ACTION.START
             case STEP.RECT:
                 if state.int_x is None:
                     error |= ERRORS.RECT.X_0 | ERRORS.RECT.X_1
                 if state.int_y is None:
                     error |= ERRORS.RECT.Y_0 | ERRORS.RECT.Y_1
                 nxt = STEP.POINTS
+                action = ACTION.RECT_COMPLETE
             case STEP.POINTS:
                 if not state.point_counted:
                     error |= ERRORS.POINTS.COMPLETE_BEFORE_COUNT
                 elif len(state.points) < self.min_points:
                     error |= ERRORS.POINTS.NOT_ENOUGH_POINTS
                 nxt = STEP.INTEGRAL
+                action = ACTION.POINTS_COMPLETE
             case STEP.INTEGRAL:
                 for v, e in zip(
                         (state.rect_area, state.n_points_hit, state.n_points_all, state.rect_negative,
@@ -151,9 +173,9 @@ class TaskSession:
                     if v is None:
                         error |= e
                 nxt = STEP.END
+                action = ACTION.INTEGRAL_COMPLETE | ACTION.END
             case STEP.ERROR:
                 raise NotImplementedError(f"{self} doesn't implement step {STEP.ERROR}")
-                # self.end()
             case _:
                 raise RuntimeError(f"{self} can't switch from step {state.step}")
         if error:
@@ -162,6 +184,8 @@ class TaskSession:
             if nxt != state.step:
                 self._stats.step_time[nxt] = time.time()
             state.step = nxt
+            self._record_action(action, (), {})
+            self._notify_action(action, (), {})
 
     @_check_error(STEP.RECT, ERRORS.RECT.WRONG_STEP)
     @_action(ACTION.X_0 | ACTION.X_1)

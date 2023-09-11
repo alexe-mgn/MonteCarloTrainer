@@ -1,7 +1,7 @@
-from enum import Enum, Flag, auto
+from enum import IntEnum, Flag, auto
 
 
-class STEP(Enum):
+class STEP(IntEnum):
     START = 0
     RECT = 1
     POINTS = 2
@@ -11,6 +11,8 @@ class STEP(Enum):
 
 
 class ACTION(Flag):
+    START = auto(), STEP.START
+
     X_0 = auto(), STEP.RECT
     X_1 = auto(), STEP.RECT
     Y_0 = auto(), STEP.RECT
@@ -29,6 +31,8 @@ class ACTION(Flag):
     NEGATIVE = auto(), STEP.INTEGRAL
     RESULT = auto(), STEP.INTEGRAL
     INTEGRAL_COMPLETE = auto(), STEP.INTEGRAL
+
+    END = auto(), STEP.END
 
     def __new__(cls, value, step: STEP):
         obj = object.__new__(cls)

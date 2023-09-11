@@ -2,7 +2,6 @@ import dataclasses
 import time
 
 from common.task.const import STEP, ACTION, ERROR, Interval, Point
-from common.task.exceptions import TaskError
 
 
 @dataclasses.dataclass
@@ -58,18 +57,17 @@ class TaskStats:
         args: tuple
         kwargs: dict
 
-        def __init__(self, task_error: TaskError, args: tuple = (), kwargs: dict = None):
-            self.code = task_error.code
-            self.action = task_error.action
+        def __init__(self, error: ERROR, args: tuple = (), kwargs: dict = None):
+            self.code = error
             self.time = time.time()
             self.args = args
             self.kwargs = kwargs if kwargs is not None else {}
 
     errors: dict[STEP, list[Error]] = dataclasses.field(default_factory=dict)
 
-    def append_error(self, error: TaskError, args: tuple = (), kwargs: dict = None):
+    def append_error(self, error: ERROR, args: tuple = (), kwargs: dict = None):
         if self.state is None:
-            step = error.code.step
+            step = error.step
             raise UserWarning(f"{self} appending error {error} without state set, arguments: {args, kwargs}.")
         else:
             step = self.state.step

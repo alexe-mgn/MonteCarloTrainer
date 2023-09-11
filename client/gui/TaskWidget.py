@@ -12,14 +12,15 @@ from common.task.const import STEP, ERROR, ACTION
 
 from client.exceptions import AppError
 from client.task.Task import Task
-from client.task.TaskSession import TaskSession
 
+from client.gui.NotifierTaskSession import NotifierTaskSession
 from client.gui.UI.TaskWidget import Ui_TaskWidget
 
 from client.gui.controllers.SpoilerController import SpoilerController
 from client.gui.controllers.error_controllers import ErrorPaletteController, ErrorMultiController, \
     ErrorPaletteDisablerController
 from client.gui.plot.PlotController import PlotController
+from client.gui.controllers.StatsController import StatsController
 
 
 class TaskWidget(QWidget, Ui_TaskWidget):
@@ -58,7 +59,7 @@ class TaskWidget(QWidget, Ui_TaskWidget):
                 w.layout().activate()
             w.adjustSize()
 
-        self._task_session: TaskSession | None = None
+        self._task_session: NotifierTaskSession | None = None
         self._error: TaskError | None = None
         self._error_controllers = {
             ERROR.X_0: ErrorPaletteController(self.inputRectX1),
@@ -103,6 +104,8 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         c_complete_hit.set_error_palette(ErrorPaletteController.PALETTE_HINT)
 
         self.hints = dict(self._HINTS)
+
+        self._stats_controller = StatsController(self)
 
         self._connect_ui()
 
@@ -175,8 +178,19 @@ class TaskWidget(QWidget, Ui_TaskWidget):
             self._step_widgets[step].setEnabled(is_current)
             self._spoilers[step].set_expanded(is_current)
 
+    def _update_stats(self):
+        self._stats_controller.set_stats(self._task_session.stats)
+
+    def _register_session_action(self, action: ACTION):
+        self._update_stats()
+
+    def _register_session_error(self, error: ERROR):
+        self._update_stats()
+
     def set_task(self, task: Task):
-        self._task_session = TaskSession(task)
+        self._task_session = NotifierTaskSession(task)
+        self._task_session.notifier.on_action.connect(self._register_session_action)
+        self._task_session.notifier.on_error.connect(self._register_session_error)
         self._task_init()
         self._rect_init()
 
@@ -198,7 +212,8 @@ class TaskWidget(QWidget, Ui_TaskWidget):
                 if controller is not None:
                     controller.set_error_state(False)
             self._error = None
-        unhandled = TaskError(action=error.action if error is not None else ACTION(0))
+        self._points_update_enough()
+        unhandled = TaskError()
         if error:
             for code in ERROR:
                 if code in error.code:
@@ -208,7 +223,6 @@ class TaskWidget(QWidget, Ui_TaskWidget):
                     else:
                         unhandled |= code
         self._error = error
-        self._points_update_enough()
         if unhandled:
             raise unhandled
 

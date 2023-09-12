@@ -3,8 +3,6 @@ import logging
 from PySide6.QtCore import QSize, QPropertyAnimation
 from PySide6.QtWidgets import QWidget
 
-from client.exceptions import AppError
-
 
 class SpoilerController:
 

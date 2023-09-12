@@ -1,7 +1,6 @@
 from PySide6.QtCore import QObject, Signal
 
 from common.task.const import ACTION, ERROR
-from common.task.exceptions import TaskError
 
 from client.task.Task import Task
 from client.task.TaskSession import TaskSession

@@ -61,7 +61,7 @@ class TaskSession:
         return self._stats
 
     def compare(self, trying: float, correct: float):
-        return abs(correct - trying) / correct <= self.accuracy if correct != 0 else trying == correct
+        return abs(correct - trying) / abs(correct) <= self.accuracy if correct != 0 else trying == correct
 
     @property
     def f_min(self):

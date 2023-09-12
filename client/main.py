@@ -1,6 +1,3 @@
-import traceback
-
-
 def install(update=False):
     import logging
     log = logging.getLogger('client.meta')
@@ -58,10 +55,8 @@ def _test(mw):
     # tw.buttonPointsComplete.click()
 
 
-def run():
+def run_client(task_batch_file: str | None = None, delimiter: str | None = None):
     import client.log
-    # configure_logging()
-
     import logging
     try:
         from client.utils import STATE, PATH
@@ -76,19 +71,58 @@ def run():
 
         app = QApplication([])
 
-        mw = MainWindow()
-        mw.show()
-
-        if STATE.DEBUG:
-            _test(mw)
-
-        app.exec()
+        from client.gui.ErrorDialog import ErrorDialog
+        ErrorDialog.setup_excepthook()
     except:
+        import traceback
+
         logging.getLogger('client.app').exception("")
         traceback.print_exc()
         input()
         raise
 
+    if task_batch_file is not None:
+        from common.TaskBatch import read_task_batch
+        batch = read_task_batch(task_batch_file, delimiter=delimiter)
+    else:
+        batch = None
+
+    mw = MainWindow()
+    mw.choice_widget.set_task_batch(batch)
+    mw.show()
+
+    # if STATE.DEBUG and task_batch is None:
+    #     _test(mw)
+
+    app.exec()
+
+
+def run_cmd_client(*args):
+    import common.exceptions
+    common.exceptions.setup_fallback_excepthook()
+
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog='MonteCarloTrainer client',
+        description='Launch Monte Carlo method trainer client',
+    )
+    f = parser.add_argument(
+        '-f', '--file', type=argparse.FileType(mode='r'),
+        help='Load tasks batch from .csv file so user have to choose name instead of entering task parameters.')
+    d = parser.add_argument(
+        '-d', '--delimiter',
+        help='.csv file delimiter (-f required).')
+
+    options = parser.parse_args(args)
+
+    if options.delimiter is not None and options.file is None:
+        raise argparse.ArgumentError(d, 'file should be specified for delimiter to have effect.')
+
+    run_client(options.file.name, delimiter=options.delimiter)
+
 
 if __name__ == '__main__':
-    run()
+    import sys
+
+    run_cmd_client(*sys.argv[1:])

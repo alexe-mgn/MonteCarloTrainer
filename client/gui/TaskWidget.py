@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QWidget
 from common.task.exceptions import TaskError
 from common.task.const import STEP, ERROR, ACTION
 
-from client.exceptions import AppError
+from common.exceptions import AppError
 from client.task.Task import Task
 
 from client.gui.NotifierTaskSession import NotifierTaskSession
@@ -24,7 +24,7 @@ from client.gui.controllers.StatsController import StatsController
 
 
 class TaskWidget(QWidget, Ui_TaskWidget):
-    RECT_ALLOWED_DISTANCE = 0.5
+    RECT_ALLOWED_DISTANCE = 1.0
     INPUT_BUFFER = 10
 
     _STEPS = (STEP.RECT, STEP.POINTS, STEP.INTEGRAL, STEP.ERROR)
@@ -103,6 +103,8 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         c_complete_miss.set_error_palette(ErrorPaletteController.PALETTE_HINT)
         c_complete_hit.set_error_palette(ErrorPaletteController.PALETTE_HINT)
 
+        self._rect_power = [0, 0]
+
         self.hints = dict(self._HINTS)
 
         self._stats_controller = StatsController(self)
@@ -121,6 +123,10 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         self.inputRectX2.valueChanged.connect(self._update_input_rect)
         self.inputRectY1.valueChanged.connect(self._update_input_rect)
         self.inputRectY2.valueChanged.connect(self._update_input_rect)
+        self.inputRectX1.editingFinished.connect(self._round_input_rect)
+        self.inputRectX2.editingFinished.connect(self._round_input_rect)
+        self.inputRectY1.editingFinished.connect(self._round_input_rect)
+        self.inputRectY2.editingFinished.connect(self._round_input_rect)
         self.buttonRectComplete.clicked.connect(self._rect_complete)
 
         self.buttonPointsGenerate.clicked.connect(self._points_generate)
@@ -250,19 +256,20 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         self._spoil_step()
 
     def _rect_init(self):
-        for interval, inputs in zip(
+        for n, (interval, inputs) in enumerate(zip(
                 (self._task_session.task.interval, (self._task_session.f_min, self._task_session.f_max)),
                 ((self.inputRectX1, self.inputRectX2), (self.inputRectY1, self.inputRectY2))
-        ):
+        )):
             dist = interval[1] - interval[0]
             margin = self.RECT_ALLOWED_DISTANCE * dist
             margin_interval = (interval[0] - margin, interval[1] + margin)
             power = int(math.ceil(math.log10(dist)) - 1)  # TODO Non-zero
+            self._rect_power[n] = power
             center = round((interval[0] + interval[1]) / 2, -power)
             for inp in inputs:
                 inp.setMinimum(margin_interval[0])
                 inp.setMaximum(margin_interval[1])
-                inp.setSingleStep(10 ** power)
+                inp.setSingleStep(round(10 ** power, -power))
                 inp.setValue(center)
 
         self._update_plot()
@@ -295,6 +302,15 @@ class TaskWidget(QWidget, Ui_TaskWidget):
             if (sv > uv) if direction else (sv < uv):
                 updatee.setValue(sv)
         self._update_plot()
+
+    def _round_input_rect(self):
+        for p, inputs in zip(
+                self._rect_power,
+                ((self.inputRectX1, self.inputRectX2), (self.inputRectY1, self.inputRectY2))
+        ):
+            p_r = 3 - p
+            for inp in inputs:
+                inp.setValue(round(inp.value(), p_r))
 
     @check_error
     def _rect_complete(self):

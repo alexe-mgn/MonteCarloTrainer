@@ -114,7 +114,11 @@
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="inputF"/>
+      <widget class="QLineEdit" name="inputF">
+       <property name="text">
+        <string>x</string>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QLabel" name="labelStart">
@@ -146,7 +150,11 @@
       </widget>
      </item>
      <item>
-      <widget class="QDoubleSpinBox" name="inputEnd"/>
+      <widget class="QDoubleSpinBox" name="inputEnd">
+       <property name="value">
+        <double>1.000000000000000</double>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>

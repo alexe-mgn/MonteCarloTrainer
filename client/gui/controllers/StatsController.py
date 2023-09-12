@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QWidget, QLCDNumber, QGridLayout
 
-from client.exceptions import AppError
+from common.exceptions import AppError
 from common.task.const import STEP
 from common.task.data import TaskStats
 

@@ -101,5 +101,6 @@ class ERRORS:
         WRONG_STEP = ERROR.INTEGRAL_WRONG_STEP
 
 
+TaskTuple = tuple[str, float, float]
 Interval = tuple[float, float]
 Point = tuple[float, float]

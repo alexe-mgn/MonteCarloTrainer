@@ -1,7 +1,7 @@
 import sympy
 from sympy.parsing.sympy_parser import *
 
-from client.exceptions import AppError
+from common.exceptions import AppError
 from common.task.const import Interval
 
 Function = Callable[[float], float]
@@ -25,8 +25,8 @@ class Task:
         self._f_sym = f.free_symbols.pop() if f.free_symbols else sympy.Symbol('x')
         self._f_eval = sympy.lambdify(self._f_sym, f)
         self._interval = tuple(interval)  # TODO Comparison
-        if self._interval[1] < self._interval[0]:
-            raise NotImplementedError(f"{self} right-to-left intervals are not supported.")
+        if self._interval[1] <= self._interval[0]:
+            raise NotImplementedError(f"{self} right-to-left and zero-width intervals are not supported.")
 
     @property
     def f_expr(self) -> sympy.Expr:

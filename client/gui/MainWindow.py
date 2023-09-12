@@ -1,5 +1,7 @@
 from PySide6.QtWidgets import QMainWindow, QStackedWidget
 
+from client.utils import CONST
+
 from client.gui.TaskChoiceWidget import TaskChoiceWidget
 from client.gui.TaskWidget import TaskWidget
 
@@ -8,6 +10,8 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.setWindowTitle(CONST.CLIENT_NAME)
+
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
 

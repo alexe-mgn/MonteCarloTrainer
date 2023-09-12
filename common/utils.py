@@ -3,7 +3,7 @@ import sys
 from os import getcwd
 from os.path import normpath, abspath, join, dirname
 
-__all__ = ['STATE', 'PATH']
+__all__ = ['CONST', 'STATE', 'PATH']
 
 
 class _Const:
@@ -23,13 +23,17 @@ class _Const:
                 log.debug(f'\t{k}\t=\t{v}')
 
 
+class CONST(_Const):
+    BASE_NAME = "MonteCarloTrainer"
+
+
 class STATE(_Const):
     FROZEN = getattr(sys, 'frozen', False)
     BUNDLED = FROZEN and getattr(sys, '_MEIPASS', None)
     HAS_CLIENT = False
     HAS_SERVER = False
 
-    DEBUG = True
+    DEBUG = False
 
 
 class PATH(_Const):

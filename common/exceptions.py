@@ -3,8 +3,8 @@ def fallback_excepthook(exc_type, exc_value, exc_traceback):
     import logging
     import traceback
 
-    logging.getLogger().exception("")
-    traceback.print_exc()
+    logging.getLogger().exception('', exc_info=(exc_type, exc_value, exc_traceback))
+    # traceback.print_exc()
     input()
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
 

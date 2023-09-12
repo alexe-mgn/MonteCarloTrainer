@@ -1,10 +1,14 @@
 from os.path import normpath, abspath, join, dirname
 
-from common.utils import STATE as COMMON_STATE, PATH as COMMON_PATH
+from common.utils import CONST as COMMON_CONST, STATE as COMMON_STATE, PATH as COMMON_PATH
 
-__all__ = ['STATE', 'PATH']
+__all__ = ['CONST', 'STATE', 'PATH']
 
 COMMON_STATE.HAS_CLIENT = True
+
+
+class CONST(COMMON_CONST):
+    CLIENT_NAME = COMMON_CONST.BASE_NAME + ' client'
 
 
 class STATE(COMMON_STATE):

@@ -119,7 +119,7 @@ def run_cmd_client(*args):
     if options.delimiter is not None and options.file is None:
         raise argparse.ArgumentError(d, 'file should be specified for delimiter to have effect.')
 
-    run_client(options.file.name, delimiter=options.delimiter)
+    run_client(None if not options.file else options.file.name, delimiter=options.delimiter)
 
 
 if __name__ == '__main__':

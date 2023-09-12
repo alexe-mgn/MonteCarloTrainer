@@ -103,9 +103,11 @@ def run_cmd_client(*args):
 
     import argparse
 
+    from client.utils import CONST
+
     parser = argparse.ArgumentParser(
-        prog='MonteCarloTrainer client',
-        description='Launch Monte Carlo method trainer client',
+        prog=CONST.CLIENT_NAME,
+        description='Launch Monte Carlo method trainer client.',
     )
     f = parser.add_argument(
         '-f', '--file', type=argparse.FileType(mode='r'),

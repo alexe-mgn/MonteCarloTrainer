@@ -1,4 +1,2 @@
-build
-dist
 /gui/UI/*.py
 /gui/plot/plotly.min.js

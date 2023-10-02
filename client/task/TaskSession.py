@@ -164,14 +164,8 @@ class TaskSession:
                 nxt = STEP.INTEGRAL
                 action = ACTION.POINTS_COMPLETE
             case STEP.INTEGRAL:
-                for v, e in zip(
-                        (state.rect_area, state.n_points_hit, state.n_points_all, state.rect_negative,
-                         state.result),
-                        (ERRORS.INTEGRAL.AREA, ERRORS.INTEGRAL.HIT, ERRORS.INTEGRAL.POINTS, ERRORS.INTEGRAL.NEGATIVE,
-                         ERRORS.INTEGRAL.RESULT)
-                ):
-                    if v is None:
-                        error |= e
+                if state.result is None:
+                    error |= ERRORS.INTEGRAL.RESULT
                 nxt = STEP.END
                 action = ACTION.INTEGRAL_COMPLETE | ACTION.END
             case STEP.ERROR:
@@ -205,10 +199,10 @@ class TaskSession:
     def set_int_y(self, interval: Interval):
         error = TaskError()
         y_allowed_error = (self._f_max - self._f_min) * self.y_accuracy
-        y_min = min(self._f_min, 0)
+        y_min = self._f_min
         if not y_min - y_allowed_error <= interval[0] <= y_min:
             error |= ERRORS.RECT.Y_0
-        y_max = max(self._f_max, 0)
+        y_max = self._f_max
         if not y_max <= interval[1] <= y_max + y_allowed_error:
             error |= ERRORS.RECT.Y_1
         if error:
@@ -229,6 +223,13 @@ class TaskSession:
                 self._state.points.append(tuple(p))
                 self._state.point_counted = False
 
+    def discard_point(self):
+        if self._state.point_counted:
+            raise RuntimeError(f"{self}: No uncounted points to discard.")
+        else:
+            self._state.points.pop()
+            self._state.point_counted = True
+
     @_check_error(STEP.POINTS, ERRORS.POINTS.WRONG_STEP)
     @_action(ACTION.COUNT)
     def count_point(self, hit: bool):
@@ -248,54 +249,13 @@ class TaskSession:
                 self._state.point_counted = True
 
     @_check_error(STEP.INTEGRAL, ERRORS.INTEGRAL.WRONG_STEP)
-    @_action(ACTION.AREA)
-    def set_rect_area(self, area: float):
-        int_x, int_y = self._state.int_x, self._state.int_y
-        if not self.compare(area, (int_x[1] - int_x[0]) * (int_y[1] - int_y[0])):
-            raise TaskError(ERRORS.INTEGRAL.AREA)
-        self._state.rect_area = area
-
-    @_check_error(STEP.INTEGRAL, ERRORS.INTEGRAL.WRONG_STEP)
-    @_action(ACTION.HIT)
-    def set_points_hit(self, n: int):
-        if n != sum(self._state.point_hits):
-            raise TaskError(ERRORS.INTEGRAL.HIT)
-        self._state.n_points_hit = n
-
-    @_check_error(STEP.INTEGRAL, ERRORS.INTEGRAL.WRONG_STEP)
-    @_action(ACTION.POINTS)
-    def set_points_all(self, n: int):
-        if n != len(self._state.points):
-            raise TaskError(ERRORS.INTEGRAL.POINTS)
-        self._state.n_points_all = n
-
-    @_check_error(STEP.INTEGRAL, ERROR.INTEGRAL_WRONG_STEP)
-    @_action(ACTION.NEGATIVE)
-    def set_rect_negative(self, area: float):
-        int_x, int_y = self._state.int_x, self._state.int_y
-        error = TaskError(ERRORS.INTEGRAL.NEGATIVE)
-        if int_y[0] >= 0:
-            if area != 0:
-                raise error
-        else:
-            if not self.compare(area, (int_x[1] - int_x[0]) * -int_y[0]):
-                raise error
-        self._state.rect_negative = area
-
-    @_check_error(STEP.INTEGRAL, ERRORS.INTEGRAL.WRONG_STEP)
     @_action(ACTION.RESULT)
     def set_result(self, res: float):
         state = self._state
-        error = TaskError()
-        for v, e in zip(
-                (state.rect_area, state.n_points_hit, state.n_points_all, state.rect_negative),
-                (ERRORS.INTEGRAL.AREA, ERRORS.INTEGRAL.HIT, ERRORS.INTEGRAL.POINTS, ERRORS.INTEGRAL.NEGATIVE)
-        ):
-            if v is None:
-                error |= e
-        if error:
-            raise error
-        elif not self.compare(res, state.rect_area * (state.n_points_hit / state.n_points_all) - state.rect_negative):
+        area = (state.int_x[1] - state.int_x[0]) * (state.int_y[1] - state.int_y[0])
+        area_neg = (state.int_x[1] - state.int_x[0]) * max(0.0, -state.int_y[0])
+        res_true = area * (sum(state.point_hits) / len(state.points)) - area_neg
+        if not self.compare(res, res_true):
             raise TaskError(ERRORS.INTEGRAL.RESULT)
         else:
             state.result = res

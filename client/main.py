@@ -43,12 +43,11 @@ def _test(mw):
     tw = mw.task_widget
     tw.inputRectX1.setValue(0)
     tw.inputRectX2.setValue(10)
-    tw.inputRectY1.setValue(0)
+    tw.inputRectY1.setValue(1)
     tw.inputRectY2.setValue(6)
     tw.buttonRectComplete.click()
 
     for _ in range(150):
-        tw.buttonPointsGenerate.click()
         p = tw._task_session.state.points[-1]
         b = tw.buttonPointsMiss if p[1] >= tw._task_session.task.f(p[0]) else tw.buttonPointsHit
         b.click()
@@ -91,8 +90,8 @@ def run_client(task_batch_file: str | None = None, delimiter: str | None = None)
     mw.choice_widget.set_task_batch(batch)
     mw.show()
 
-    # if STATE.DEBUG and task_batch is None:
-    #     _test(mw)
+    if STATE.DEBUG and batch is None:
+        _test(mw)
 
     app.exec()
 

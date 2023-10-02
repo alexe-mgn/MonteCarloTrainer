@@ -17,8 +17,7 @@ from client.gui.NotifierTaskSession import NotifierTaskSession
 from client.gui.UI.TaskWidget import Ui_TaskWidget
 
 from client.gui.controllers.SpoilerController import SpoilerController
-from client.gui.controllers.error_controllers import ErrorPaletteController, ErrorMultiController, \
-    ErrorPaletteDisablerController
+from client.gui.controllers.error_controllers import ErrorPaletteController, ErrorPaletteDisablerController
 from client.gui.plot.PlotController import PlotController
 from client.gui.controllers.StatsController import StatsController
 
@@ -33,7 +32,8 @@ class TaskWidget(QWidget, Ui_TaskWidget):
                    " чтобы он заключал в себе функцию на заданном интервале и касался оси абсцисс.",
         STEP.POINTS: "Сгенерируйте несколько точек внутри прямоугольника,"
                      " подсчитывая, какие попадают под прямую, а какие - нет.",
-        STEP.INTEGRAL: "На основе полученных ранее чисел вычислите примерное значение определённого интеграла",
+        # STEP.INTEGRAL: "На основе полученных ранее чисел вычислите примерное значение определённого интеграла",
+        STEP.INTEGRAL: UserWarning("DEFINED BY .labelIntHint"),
         STEP.ERROR: "",
         STEP.END: "Поздравляем, всё правильно!",
     }
@@ -68,44 +68,23 @@ class TaskWidget(QWidget, Ui_TaskWidget):
             ERROR.Y_1: ErrorPaletteController(self.inputRectY2),
             # ERROR.RECT_WRONG_STEP: None,
 
-            ERROR.COUNT_BEFORE_GENERATE: ErrorMultiController(
-                c_count_gen := ErrorPaletteController(self.buttonPointsGenerate),
-                c_count_miss := ErrorPaletteDisablerController(self.buttonPointsMiss),
-                c_count_hit := ErrorPaletteDisablerController(self.buttonPointsHit),
-            ),
+            # ERROR.COUNT_BEFORE_GENERATE: None,
             # ERROR.POINT: None,
-            ERROR.GENERATE_BEFORE_COUNT: ErrorMultiController(
-                c_gen_gen := ErrorPaletteDisablerController(self.buttonPointsGenerate),
-                c_gen_miss := ErrorPaletteController(self.buttonPointsMiss),
-                c_gen_hit := ErrorPaletteController(self.buttonPointsHit),
-            ),
-            ERROR.COMPLETE_BEFORE_COUNT: ErrorMultiController(
-                c_complete_complete := ErrorPaletteDisablerController(self.buttonPointsComplete),
-                c_complete_miss := ErrorPaletteController(self.buttonPointsMiss),
-                c_complete_hit := ErrorPaletteController(self.buttonPointsHit),
-            ),
+            # ERROR.GENERATE_BEFORE_COUNT: None,
             ERROR.COUNT: None,
-            ERROR.COUNT_MISS: ErrorPaletteDisablerController(self.buttonPointsMiss),
-            ERROR.COUNT_HIT: ErrorPaletteDisablerController(self.buttonPointsHit),
+            ERROR.COUNT_MISS: ErrorPaletteController(self.buttonPointsMiss),
+            ERROR.COUNT_HIT: ErrorPaletteController(self.buttonPointsHit),
             # ERROR.NOT_ENOUGH_POINTS: None,
             # ERROR.POINTS_WRONG_STEP: None,
 
-            ERROR.AREA: ErrorPaletteController(self.inputIntArea),
-            ERROR.HIT: ErrorPaletteController(self.inputIntHit),
-            ERROR.POINTS: ErrorPaletteController(self.inputIntAll),
-            ERROR.NEGATIVE: ErrorPaletteController(self.inputIntNegative),
             ERROR.RESULT: ErrorPaletteController(self.inputIntResult),
             # ERROR.INTEGRAL_WRONG_STEP: None,
         }
-        c_count_gen.set_error_palette(ErrorPaletteController.PALETTE_HINT)
-        c_gen_miss.set_error_palette(ErrorPaletteController.PALETTE_HINT)
-        c_gen_hit.set_error_palette(ErrorPaletteController.PALETTE_HINT)
-        c_complete_miss.set_error_palette(ErrorPaletteController.PALETTE_HINT)
-        c_complete_hit.set_error_palette(ErrorPaletteController.PALETTE_HINT)
 
         self._rect_power = [0, 0]
 
         self.hints = dict(self._HINTS)
+        self.hints[STEP.INTEGRAL] = self.labelIntHint.text()
 
         self._stats_controller = StatsController(self)
 
@@ -114,6 +93,8 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         for step, w in self._step_widgets.items():
             w.setEnabled(False)
             w.spoiler_controller.set_expanded(False)
+
+        self.labelIntHint.hide()
         self.widgetMError.hide()
 
     def _connect_ui(self):
@@ -129,15 +110,10 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         self.inputRectY2.editingFinished.connect(self._round_input_rect)
         self.buttonRectComplete.clicked.connect(self._rect_complete)
 
-        self.buttonPointsGenerate.clicked.connect(self._points_generate)
         self.buttonPointsMiss.clicked.connect(self._points_miss)
         self.buttonPointsHit.clicked.connect(self._points_hit)
         self.buttonPointsComplete.clicked.connect(self._points_complete)
 
-        self.inputIntArea.valueChanged.connect(self._update_result_calc)
-        self.inputIntHit.valueChanged.connect(self._update_result_calc)
-        self.inputIntAll.valueChanged.connect(self._update_result_calc)
-        self.inputIntNegative.valueChanged.connect(self._update_result_calc)
         self.buttonIntComplete.clicked.connect(self._integral_complete)
 
     def task(self):
@@ -210,7 +186,7 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         for step in self._STEPS:
             is_current = step == self._task_session.step
             self._step_widgets[step].setEnabled(is_current)
-            self._spoilers[step].expand(is_current or step == STEP.RECT and self._task_session.step != STEP.END)
+            self._spoilers[step].expand(step <= self._task_session.step and self._task_session.step != STEP.END)
 
     def _set_error(self, error: TaskError | None = None):
         if self._error is not None:
@@ -324,8 +300,8 @@ class TaskWidget(QWidget, Ui_TaskWidget):
 
     def _points_init(self):
         self._points_update_enough()
+        self._points_generate()
 
-    @check_error
     def _points_generate(self):
         x = self._task_session.state.int_x
         y = self._task_session.state.int_y
@@ -341,6 +317,7 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         hits = self._task_session.state.point_hits
         self.viewPointsMiss.display(sum(not e for e in hits))
         self.viewPointsHit.display(sum(bool(e) for e in hits))
+        self._points_generate()
 
     @check_error
     def _points_miss(self):
@@ -354,6 +331,8 @@ class TaskWidget(QWidget, Ui_TaskWidget):
 
     @check_error
     def _points_complete(self):
+        if not self._task_session.state.point_counted:
+            self._task_session.discard_point()
         self._session_next_step()
         self._integral_init()
 
@@ -361,33 +340,14 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         state = self._task_session.state
         int_x, int_y = state.int_x, state.int_y
         area = (int_x[1] - int_x[0]) * (int_y[1] - int_y[0])
-        self.inputIntArea.setMaximum(area * self.INPUT_BUFFER)
-        self.inputIntNegative.setMaximum(area * self.INPUT_BUFFER)
         np = len(state.points)
-        self.inputIntHit.setMaximum(np * self.INPUT_BUFFER)
-        self.inputIntAll.setMaximum(np * self.INPUT_BUFFER)
         nph = sum(state.point_hits)
         negative = (int_x[1] - int_x[0]) * min(-int_y[0], 0)
         res = area * (nph / np) - negative
         self.inputIntResult.setRange(-res * self.INPUT_BUFFER, +res * self.INPUT_BUFFER)
 
-        for inp in (self.inputIntHit, self.inputIntAll):
-            inp.setEnabled(False)
-        self.inputIntHit.setValue(nph)
-        self.inputIntAll.setValue(np)
-
-    def _update_result_calc(self):
-        res = self.inputIntArea.value() * (
-                self.inputIntHit.value() / self.inputIntAll.value()
-        ) - self.inputIntNegative.value()
-        self.viewIntResult.setText(f'{res:.3g}')
-
     @check_error
     def _integral_complete(self):
         ts = self._task_session
-        ts.set_rect_area(self.inputIntArea.value())
-        ts.set_points_hit(self.inputIntHit.value())
-        ts.set_points_all(self.inputIntAll.value())
-        ts.set_rect_negative(self.inputIntNegative.value())
         ts.set_result(self.inputIntResult.value())
         self._session_next_step()

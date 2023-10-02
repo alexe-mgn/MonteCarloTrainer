@@ -12,10 +12,6 @@ class TaskState:
     points: list[Point] = dataclasses.field(default_factory=list)
     point_hits: list[bool] = dataclasses.field(default_factory=list)
     point_counted: bool = True
-    rect_area: float | None = None
-    n_points_hit: int | None = None
-    n_points_all: int | None = None
-    rect_negative: float | None = None
     result: float | None = None
 
 

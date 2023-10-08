@@ -7,6 +7,7 @@ from common.task.const import STEP, ACTION, ERROR, ERRORS, Interval, Point
 from common.task.data import TaskState, TaskStats
 from common.task.exceptions import TaskError
 from client.task.Task import Task
+from client.task.errors import LaplaceError
 
 
 class TaskSession:
@@ -14,7 +15,6 @@ class TaskSession:
 
     accuracy = 0.01
     y_accuracy = 0.1
-    min_points = 10
 
     def __init__(self, task: Task):
         self._task = task
@@ -159,17 +159,20 @@ class TaskSession:
             case STEP.POINTS:
                 if not state.point_counted:
                     error |= ERRORS.POINTS.COMPLETE_BEFORE_COUNT
-                elif len(state.points) < self.min_points:
+                elif len(state.points) < self._task.min_points:
                     error |= ERRORS.POINTS.NOT_ENOUGH_POINTS
                 nxt = STEP.INTEGRAL
                 action = ACTION.POINTS_COMPLETE
             case STEP.INTEGRAL:
                 if state.result is None:
                     error |= ERRORS.INTEGRAL.RESULT
-                nxt = STEP.END
-                action = ACTION.INTEGRAL_COMPLETE | ACTION.END
+                nxt = STEP.ERROR
+                action = ACTION.INTEGRAL_COMPLETE
             case STEP.ERROR:
-                raise NotImplementedError(f"{self} doesn't implement step {STEP.ERROR}")
+                if state.error is None:
+                    error |= ERRORS.ERROR.ERROR
+                nxt = STEP.END
+                action = ACTION.ERROR_COMPLETE | ACTION.END
             case _:
                 raise RuntimeError(f"{self} can't switch from step {state.step}")
         if error:
@@ -199,10 +202,10 @@ class TaskSession:
     def set_int_y(self, interval: Interval):
         error = TaskError()
         y_allowed_error = (self._f_max - self._f_min) * self.y_accuracy
-        y_min = self._f_min
+        y_min = min(self._f_min, 0)
         if not y_min - y_allowed_error <= interval[0] <= y_min:
             error |= ERRORS.RECT.Y_0
-        y_max = self._f_max
+        y_max = max(self._f_max, 0)
         if not y_max <= interval[1] <= y_max + y_allowed_error:
             error |= ERRORS.RECT.Y_1
         if error:
@@ -259,6 +262,17 @@ class TaskSession:
             raise TaskError(ERRORS.INTEGRAL.RESULT)
         else:
             state.result = res
+
+    @_check_error(STEP.ERROR, ERRORS.ERROR.WRONG_STEP)
+    @_action(ACTION.ERROR)
+    def set_error(self, error: int):
+        state = self._state
+        p = sum(state.point_hits) / len(state.points)
+        error_true = p * (1 - p) / (self._task.error * LaplaceError().get_error(self._task.confidence)) ** 2
+        if not self.compare(error, error_true):
+            raise TaskError(ERRORS.ERROR.ERROR)
+        else:
+            state.error = error
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self._task}, step={self._state.step})"

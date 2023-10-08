@@ -40,6 +40,8 @@ let plot_rect_data = {
 let plot_layout = {
     showlegend: false,
     margin: {l: 0, r: 0, b: 0, t: 0, pad: 0},
+    xaxis: {autotick: true, ticks: 'outside', showticklabels: true},
+    yaxis: {autotick: true, ticks: 'outside', showticklabels: true},
     // autosize: true,
     shapes: [
         plot_rect_data

@@ -1,3 +1,5 @@
+import sys
+
 from PySide6.QtCore import Signal, QSignalBlocker
 from PySide6.QtWidgets import QWidget
 
@@ -15,8 +17,12 @@ class TaskChoiceWidget(QWidget, Ui_TaskChoiceWidget):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        font = self.viewTask.font()
+        font.setStyleHint(font.StyleHint.Monospace)
+        self.viewTask.setFont(font)
         for i in (self.inputStart, self.inputEnd):
-            i.setRange(-100000, 100000)
+            i.setRange(-sys.maxsize, sys.maxsize)
+        self.inputPoints.setRange(1, 2 ** 31 - 1)
 
         self._task: Task | None = None
         self._task_batch = None
@@ -67,7 +73,9 @@ class TaskChoiceWidget(QWidget, Ui_TaskChoiceWidget):
 
     def task(self) -> Task | None:
         return Task(
-            self.inputF.text(), (self.inputStart.value(), self.inputEnd.value())
+            self.inputF.text(), (self.inputStart.value(), self.inputEnd.value()),
+            self.inputPoints.value(),
+            self.inputError.value(), self.inputConfidence.value()
         ) if self.inputF.text() else None
 
     def update_task(self):

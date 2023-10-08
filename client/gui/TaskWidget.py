@@ -7,6 +7,7 @@ from typing import Self
 from PySide6.QtCore import QSignalBlocker
 from PySide6.QtWidgets import QWidget
 
+from client.task.errors import LaplaceError
 from common.task.exceptions import TaskError
 from common.task.const import STEP, ERROR, ACTION
 
@@ -15,9 +16,10 @@ from client.task.Task import Task
 
 from client.gui.NotifierTaskSession import NotifierTaskSession
 from client.gui.UI.TaskWidget import Ui_TaskWidget
+from client.gui.ErrorTableWidget import ErrorTableWidget
 
 from client.gui.controllers.SpoilerController import SpoilerController
-from client.gui.controllers.error_controllers import ErrorPaletteController, ErrorPaletteDisablerController
+from client.gui.controllers.error_controllers import ErrorPaletteController
 from client.gui.plot.PlotController import PlotController
 from client.gui.controllers.StatsController import StatsController
 
@@ -34,18 +36,23 @@ class TaskWidget(QWidget, Ui_TaskWidget):
                      " подсчитывая, какие попадают под прямую, а какие - нет.",
         # STEP.INTEGRAL: "На основе полученных ранее чисел вычислите примерное значение определённого интеграла",
         STEP.INTEGRAL: UserWarning("DEFINED BY .labelIntHint"),
-        STEP.ERROR: "",
+        STEP.ERROR: UserWarning("DEFINED BY .labelErrorHint"),
         STEP.END: "Поздравляем, всё правильно!",
     }
 
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self._error_table = None
+
+        font = self.viewTaskF.font()
+        font.setStyleHint(font.StyleHint.Monospace)
+        self.viewTaskF.setFont(font)
         self.viewTaskInterval.__text = self.viewTaskInterval.text()
 
         self._step_widgets: dict[STEP, QWidget] = {k: v for k, v in zip(
             self._STEPS,
-            (self.widgetRect, self.widgetPoints, self.widgetIntegral, self.widgetMError)
+            (self.widgetRect, self.widgetPoints, self.widgetIntegral, self.widgetError)
         )}
 
         self._plot_controller = PlotController(self.viewPlot)
@@ -85,6 +92,7 @@ class TaskWidget(QWidget, Ui_TaskWidget):
 
         self.hints = dict(self._HINTS)
         self.hints[STEP.INTEGRAL] = self.labelIntHint.text()
+        self.hints[STEP.ERROR] = self.labelErrorHint.text()
 
         self._stats_controller = StatsController(self)
 
@@ -95,7 +103,7 @@ class TaskWidget(QWidget, Ui_TaskWidget):
             w.spoiler_controller.set_expanded(False)
 
         self.labelIntHint.hide()
-        self.widgetMError.hide()
+        self.labelErrorHint.hide()
 
     def _connect_ui(self):
         self._plot_controller.loaded.connect(self._update_plot)
@@ -115,6 +123,9 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         self.buttonPointsComplete.clicked.connect(self._points_complete)
 
         self.buttonIntComplete.clicked.connect(self._integral_complete)
+
+        self.buttonErrorTable.clicked.connect(self._show_error_table)
+        self.buttonErrorComplete.clicked.connect(self._error_complete)
 
     def task(self):
         return self._task_session.task
@@ -183,10 +194,11 @@ class TaskWidget(QWidget, Ui_TaskWidget):
             logging.getLogger('client.ui').warning(f"{self} not found hint for step {self._task_session.step}.")
 
     def _spoil_step(self):
+        current = self._task_session.step
         for step in self._STEPS:
-            is_current = step == self._task_session.step
+            is_current = step == current
             self._step_widgets[step].setEnabled(is_current)
-            self._spoilers[step].expand(step <= self._task_session.step and self._task_session.step != STEP.END)
+            self._spoilers[step].expand(is_current or (step < current < step.ERROR))
 
     def _set_error(self, error: TaskError | None = None):
         if self._error is not None:
@@ -239,12 +251,12 @@ class TaskWidget(QWidget, Ui_TaskWidget):
             dist = interval[1] - interval[0]
             margin = self.RECT_ALLOWED_DISTANCE * dist
             margin_interval = (interval[0] - margin, interval[1] + margin)
-            power = int(math.ceil(math.log10(dist)) - 1)  # TODO Non-zero
+            power = int(math.ceil(math.log10(dist) if dist > 0 else 0)) - 1
             self._rect_power[n] = power
             center = round((interval[0] + interval[1]) / 2, -power)
             for inp in inputs:
-                inp.setMinimum(margin_interval[0])
-                inp.setMaximum(margin_interval[1])
+                inp.setDecimals(max(0, -power + 1))
+                inp.setRange(*margin_interval)
                 inp.setSingleStep(round(10 ** power, -power))
                 inp.setValue(center)
 
@@ -296,7 +308,7 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         self._points_init()
 
     def _points_update_enough(self):
-        self.buttonPointsComplete.setEnabled(len(self._task_session.state.points) >= self._task_session.min_points)
+        self.buttonPointsComplete.setEnabled(len(self._task_session.state.points) >= self._task_session.task.min_points)
 
     def _points_init(self):
         self._points_update_enough()
@@ -351,3 +363,36 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         ts = self._task_session
         ts.set_result(self.inputIntResult.value())
         self._session_next_step()
+        self._error_init()
+
+    def _error_init(self):
+        state = self._task_session.state
+        task = self._task_session.task
+
+        self.viewErrorP.setText(f'{sum(state.point_hits) / len(state.points):.3g}')
+        self.viewErrorConfidence.setText(f'{task.confidence:.3g}')
+        self.viewErrorError.setText(f'{task.error:.3g}')
+
+        task = self._task_session.task
+        state = self._task_session.state
+        p = sum(state.point_hits) / len(state.points)
+        error_true = p * (1 - p) / (task.error * LaplaceError().get_error(task.confidence)) ** 2
+        self.inputError.setRange(1, error_true * 2)
+        self.inputError.setValue(error_true)
+
+    def _show_error_table(self):
+        if self._error_table is None:
+            self._error_table = ErrorTableWidget(self._task_session.task.confidence, rows=20, cols=2, dev=0.2)
+        self._error_table.show()
+        self._error_table.adjustSize()
+        self._error_table.resize(self._error_table.sizeHint())
+
+    @check_error
+    def _error_complete(self):
+        ts = self._task_session
+        ts.set_error(self.inputError.value())
+        self._session_next_step()
+        self._complete()
+
+    def _complete(self):
+        ...

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1009</width>
-    <height>758</height>
+    <width>1250</width>
+    <height>830</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -239,17 +239,17 @@
          <property name="title">
           <string>Расстановка и подсчёт точек</string>
          </property>
-         <layout class="QGridLayout" name="layoutPoints" columnstretch="0,0,0,0">
-          <item row="2" column="1">
-           <widget class="QLabel" name="viewPointsY">
+         <layout class="QGridLayout" name="layoutPoints" columnstretch="0,0,0,0,0,0">
+          <item row="0" column="2">
+           <widget class="QLabel" name="labelPointsY">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
             <property name="text">
-             <string>0</string>
+             <string>Y</string>
             </property>
            </widget>
           </item>
@@ -266,22 +266,6 @@
             </property>
            </widget>
           </item>
-          <item row="3" column="2">
-           <widget class="QPushButton" name="buttonPointsHit">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="autoFillBackground">
-             <bool>true</bool>
-            </property>
-            <property name="text">
-             <string>Точка ниже</string>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="1">
            <widget class="QLabel" name="viewPointsX">
             <property name="sizePolicy">
@@ -295,7 +279,20 @@
             </property>
            </widget>
           </item>
-          <item row="3" column="1">
+          <item row="0" column="3">
+           <widget class="QLabel" name="viewPointsY">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="3">
            <widget class="QLabel" name="viewPointsFY">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -309,61 +306,6 @@
            </widget>
           </item>
           <item row="2" column="2">
-           <widget class="QPushButton" name="buttonPointsMiss">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="autoFillBackground">
-             <bool>true</bool>
-            </property>
-            <property name="text">
-             <string>Точка выше</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="labelPointsY">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>Y</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="3">
-           <widget class="QLCDNumber" name="viewPointsHit">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="digitCount">
-             <number>3</number>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="3">
-           <widget class="QLCDNumber" name="viewPointsMiss">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="digitCount">
-             <number>3</number>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
            <widget class="QLabel" name="labelPointsFY">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -376,7 +318,7 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="2" colspan="2">
+          <item row="2" column="0" colspan="2">
            <widget class="QPushButton" name="buttonPointsComplete">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -392,6 +334,64 @@
             </property>
             <property name="text">
              <string>Закончить</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4">
+           <widget class="QPushButton" name="buttonPointsMiss">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="autoFillBackground">
+             <bool>true</bool>
+            </property>
+            <property name="text">
+             <string>Точка выше</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="4">
+           <widget class="QPushButton" name="buttonPointsHit">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="autoFillBackground">
+             <bool>true</bool>
+            </property>
+            <property name="text">
+             <string>Точка ниже</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="5">
+           <widget class="QLCDNumber" name="viewPointsMiss">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="digitCount">
+             <number>3</number>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="5">
+           <widget class="QLCDNumber" name="viewPointsHit">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="digitCount">
+             <number>3</number>
             </property>
            </widget>
           </item>
@@ -470,7 +470,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="widgetMError">
+        <widget class="QGroupBox" name="widgetError">
          <property name="enabled">
           <bool>true</bool>
          </property>
@@ -483,6 +483,107 @@
          <property name="title">
           <string>Определение погрешности</string>
          </property>
+         <layout class="QGridLayout" name="gridLayout_2">
+          <item row="7" column="2">
+           <widget class="QPushButton" name="buttonErrorComplete">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Далее</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="1">
+           <widget class="QSpinBox" name="inputError"/>
+          </item>
+          <item row="7" column="0">
+           <widget class="QLabel" name="labelError">
+            <property name="text">
+             <string>Количество
+необходимых измерений</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="2">
+           <widget class="QLabel" name="viewErrorError">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="2">
+           <widget class="QPushButton" name="buttonErrorTable">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Таблица</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QLabel" name="viewErrorP">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0" colspan="2">
+           <widget class="QLabel" name="labelErrorError">
+            <property name="text">
+             <string>d - погрешность</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0" colspan="2">
+           <widget class="QLabel" name="labelErrorLaplace">
+            <property name="text">
+             <string>L - значение обратной функции Лапласа</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0" colspan="2">
+           <widget class="QLabel" name="labelErrorP">
+            <property name="text">
+             <string>p - вероятность появления точки ниже F(x)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" colspan="3">
+           <widget class="QLabel" name="labelErrorHint">
+            <property name="text">
+             <string>Подсчитайте количество точек, необходимое для вычисления интеграла с заданной точностью, если оно равно p*(1-p)/(d*L(t))^2</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="labelErrorConfidence">
+            <property name="text">
+             <string>t - доверительный интервал</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="2">
+           <widget class="QLabel" name="viewErrorConfidence">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
       </layout>

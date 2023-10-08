@@ -13,6 +13,7 @@ class TaskState:
     point_hits: list[bool] = dataclasses.field(default_factory=list)
     point_counted: bool = True
     result: float | None = None
+    error: int | None = None
 
 
 @dataclasses.dataclass

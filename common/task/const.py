@@ -25,12 +25,11 @@ class ACTION(Flag):
     COUNT_HIT = auto(), STEP.POINTS
     POINTS_COMPLETE = auto(), STEP.POINTS
 
-    AREA = auto(), STEP.INTEGRAL
-    HIT = auto(), STEP.INTEGRAL
-    POINTS = auto(), STEP.INTEGRAL
-    NEGATIVE = auto(), STEP.INTEGRAL
     RESULT = auto(), STEP.INTEGRAL
     INTEGRAL_COMPLETE = auto(), STEP.INTEGRAL
+
+    ERROR = auto(), STEP.ERROR
+    ERROR_COMPLETE = auto(), STEP.ERROR
 
     END = auto(), STEP.END
 
@@ -60,6 +59,9 @@ class ERROR(Flag):
 
     RESULT = auto(), STEP.INTEGRAL, ACTION.RESULT
     INTEGRAL_WRONG_STEP = auto(), STEP.INTEGRAL
+
+    ERROR = auto(), STEP.ERROR, ACTION.ERROR
+    ERROR_WRONG_STEP = auto(), STEP.ERROR
 
     def __new__(cls, value, step: STEP, actions: ACTION = ACTION(0)):
         obj = object.__new__(cls)
@@ -91,6 +93,10 @@ class ERRORS:
     class INTEGRAL:
         RESULT = ERROR.RESULT
         WRONG_STEP = ERROR.INTEGRAL_WRONG_STEP
+
+    class ERROR:
+        ERROR = ERROR.ERROR
+        WRONG_STEP = ERROR.ERROR_WRONG_STEP
 
 
 TaskTuple = tuple[str, float, float]

@@ -43,7 +43,7 @@ def _test(mw):
     tw = mw.task_widget
     tw.inputRectX1.setValue(0)
     tw.inputRectX2.setValue(10)
-    tw.inputRectY1.setValue(1)
+    tw.inputRectY1.setValue(0)
     tw.inputRectY2.setValue(6)
     tw.buttonRectComplete.click()
 
@@ -51,7 +51,13 @@ def _test(mw):
         p = tw._task_session.state.points[-1]
         b = tw.buttonPointsMiss if p[1] >= tw._task_session.task.f(p[0]) else tw.buttonPointsHit
         b.click()
-    # tw.buttonPointsComplete.click()
+    tw.buttonPointsComplete.click()
+
+    state = tw._task_session.state
+    area = (state.int_x[1] - state.int_x[0]) * (state.int_y[1] - state.int_y[0])
+    area_neg = (state.int_x[1] - state.int_x[0]) * max(0.0, -state.int_y[0])
+    tw.inputIntResult.setValue(area * (sum(state.point_hits) / len(state.points)) - area_neg)
+    tw.buttonIntComplete.click()
 
 
 def run_client(task_batch_file: str | None = None, delimiter: str | None = None):

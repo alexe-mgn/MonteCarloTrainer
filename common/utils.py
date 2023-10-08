@@ -33,7 +33,7 @@ class STATE(_Const):
     HAS_CLIENT = False
     HAS_SERVER = False
 
-    DEBUG = False
+    DEBUG = True
 
 
 class PATH(_Const):

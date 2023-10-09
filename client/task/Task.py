@@ -58,6 +58,15 @@ class Task:
     def confidence(self) -> float:
         return self._confidence
 
+    def f_str(self):
+        return sympy.pretty(self._f_expr, use_unicode=False)
+
+    def str(self):
+        return sympy.pretty(
+            sympy.Integral(self._f_expr,
+                           (self._f_sym, *self._interval)),
+            use_unicode=False)
+
     def f_unicode_str(self):
         return sympy.pretty(self._f_expr, use_unicode=True)
 

@@ -1,6 +1,5 @@
-import sys
-
 from PySide6.QtCore import Signal, QSignalBlocker
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QWidget
 
 from common.exceptions import AppError
@@ -17,12 +16,13 @@ class TaskChoiceWidget(QWidget, Ui_TaskChoiceWidget):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        font = self.viewTask.font()
-        font.setStyleHint(font.StyleHint.Monospace)
+        font = QFont("Courier")
+        font.setStyleHint(font.StyleHint.TypeWriter)
         self.viewTask.setFont(font)
+        mx = 2 ** 31 - 1
         for i in (self.inputStart, self.inputEnd):
-            i.setRange(-sys.maxsize, sys.maxsize)
-        self.inputPoints.setRange(1, 2 ** 31 - 1)
+            i.setRange(-mx, mx)
+        self.inputPoints.setRange(1, mx)
 
         self._task: Task | None = None
         self._task_batch: TaskBatch | None = None

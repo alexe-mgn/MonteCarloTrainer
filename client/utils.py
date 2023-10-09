@@ -16,14 +16,9 @@ class STATE(COMMON_STATE):
 
 
 class PATH(COMMON_PATH):
-    # CONFIG = MEIPASS
-
-    LOAD = join(COMMON_PATH.LOAD, 'client')
-    # WRITE = EXECUTABLE
+    LOAD = join(COMMON_PATH.LOAD, 'client')  # TODO Potential .spec issues. test.spec has client-relative paths.
 
     UI = join(LOAD, normpath('gui/UI'))
     PLOT = join(LOAD, normpath('gui/plot'))
     PLOTLY_JS = join(PLOT, 'plotly.min.js')
     PLOT_HTML = join(PLOT, 'plot.html')
-
-    UTILS_FILE = __file__

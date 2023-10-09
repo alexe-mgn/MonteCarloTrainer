@@ -13,8 +13,8 @@ from client.task.LaplaceError import LaplaceError
 class TaskSession:
     _RESOLUTION = 1000
 
-    accuracy = 0.01
-    y_accuracy = 0.1
+    accuracy = 0.05
+    # y_accuracy = 0.1
 
     def __init__(self, task: Task):
         self._task = task
@@ -201,7 +201,7 @@ class TaskSession:
     @_action(ACTION.Y_0 | ACTION.Y_1)
     def set_int_y(self, interval: Interval):
         error = TaskError()
-        y_allowed_error = (self._f_max - self._f_min) * self.y_accuracy
+        y_allowed_error = (self._f_max - self._f_min) * self.accuracy
         y_min = min(self._f_min, 0)
         if not y_min - y_allowed_error <= interval[0] <= y_min:
             error |= ERRORS.RECT.Y_0

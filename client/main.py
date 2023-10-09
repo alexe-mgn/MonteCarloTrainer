@@ -93,7 +93,7 @@ def run_client(task_batch_file: str | None = None, delimiter: str | None = None,
     if task_batch_file is not None:
         from common.TaskBatch import read_task_batch
         with open(task_batch_file, mode='r', encoding='utf-8') as f:
-            batch = read_task_batch(f, delimiter=delimiter)
+            batch = read_task_batch(f, **dict(delimiter=delimiter) if delimiter is not None else dict())
     else:
         batch = None
 

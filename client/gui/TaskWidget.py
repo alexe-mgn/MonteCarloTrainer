@@ -5,6 +5,7 @@ import random
 from typing import Self
 
 from PySide6.QtCore import QSignalBlocker
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QWidget
 
 from common.exceptions import AppError
@@ -46,8 +47,8 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         self.setupUi(self)
         self._error_table = None
 
-        font = self.viewTaskF.font()
-        font.setStyleHint(font.StyleHint.Monospace)
+        font = QFont("Courier")
+        font.setStyleHint(font.StyleHint.TypeWriter)
         self.viewTaskF.setFont(font)
         self.viewTaskInterval.__text = self.viewTaskInterval.text()
 
@@ -251,14 +252,17 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         self._spoil_step()
 
     def _rect_init(self):
+        ts = self._task_session
         for n, (interval, inputs) in enumerate(zip(
-                (self._task_session.task.interval, (self._task_session.f_min, self._task_session.f_max)),
+                (ts.task.interval, (ts.f_min, ts.f_max)),
                 ((self.inputRectX1, self.inputRectX2), (self.inputRectY1, self.inputRectY2))
         )):
             dist = interval[1] - interval[0]
             margin = self.RECT_ALLOWED_DISTANCE * dist
             margin_interval = (interval[0] - margin, interval[1] + margin)
             power = int(math.ceil(math.log10(dist) if dist > 0 else 0)) - 1
+            while any(abs(round(e, -power) - e) >= dist * ts.accuracy for e in interval):
+                power -= 1
             self._rect_power[n] = power
             center = round((interval[0] + interval[1]) / 2, -power)
             for inp in inputs:

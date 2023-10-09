@@ -33,18 +33,17 @@ class STATE(_Const):
     HAS_CLIENT = False
     HAS_SERVER = False
 
-    DEBUG = True
+    DEBUG = False
 
 
 class PATH(_Const):
-    UTILS_FILE = __file__
-    EXECUTABLE = abspath(join(dirname(UTILS_FILE), '..'))
+    PACKAGE = abspath(join(dirname(__file__), '..'))
+    EXECUTABLE = dirname(abspath(sys.argv[0]))
     CWD = getcwd()
-    MEIPASS = getattr(sys, '_MEIPASS', EXECUTABLE)
+    MEIPASS = getattr(sys, '_MEIPASS', PACKAGE)
 
     LOAD = MEIPASS
     WRITE = EXECUTABLE
-
 
     @classmethod
     def get(cls, *path, mode=None):

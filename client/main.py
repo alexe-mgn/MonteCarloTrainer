@@ -38,6 +38,7 @@ def _test(mw):
     cw.inputF.setText('0.5x+1')
     cw.inputStart.setValue(0)
     cw.inputEnd.setValue(10)
+    cw.inputError.setValue(0.05)
     mw.start_task()
 
     tw = mw.task_widget
@@ -60,7 +61,7 @@ def _test(mw):
     tw.buttonIntComplete.click()
 
 
-def run_client(task_batch_file: str | None = None, delimiter: str | None = None):
+def run_client(task_batch_file: str | None = None, delimiter: str | None = None, test: bool = False):
     import client.log
     import logging
     try:
@@ -69,10 +70,13 @@ def run_client(task_batch_file: str | None = None, delimiter: str | None = None)
         STATE.log_debug()
         PATH.log_debug()
 
+        assert not ((task_batch_file is not None) and test)
+        assert (task_batch_file is not None) >= (delimiter is not None)
+
         install()
 
         from PySide6.QtWidgets import QApplication
-        from client.gui.MainWindow import MainWindow
+        from client.gui.MainWindow import MainWindow, DownloaderMainWindow
 
         app = QApplication([])
 
@@ -88,15 +92,23 @@ def run_client(task_batch_file: str | None = None, delimiter: str | None = None)
 
     if task_batch_file is not None:
         from common.TaskBatch import read_task_batch
-        batch = read_task_batch(task_batch_file, delimiter=delimiter)
+        with open(task_batch_file, mode='r', encoding='utf-8') as f:
+            batch = read_task_batch(f, delimiter=delimiter)
     else:
         batch = None
 
-    mw = MainWindow()
-    mw.choice_widget.set_task_batch(batch)
-    mw.show()
+    if not test:
+        mw = MainWindow()
+        mw.choice_widget.set_task_batch(batch)
+        mw.show()
+    else:
+        mw = DownloaderMainWindow()
+        mw.choice_widget.set_task_displayed(False)
+        mw.load_key_path(PATH.get('test_doc_id.txt', mode='LOAD'))
+        mw.download()
+        mw.show()
 
-    if STATE.DEBUG and batch is None:
+    if STATE.DEBUG and not test and batch is None:
         _test(mw)
 
     app.exec()

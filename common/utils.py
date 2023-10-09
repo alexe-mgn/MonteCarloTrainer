@@ -37,14 +37,14 @@ class STATE(_Const):
 
 
 class PATH(_Const):
-    EXECUTABLE = dirname(abspath(sys.argv[0]))
+    UTILS_FILE = __file__
+    EXECUTABLE = abspath(join(dirname(UTILS_FILE), '..'))
     CWD = getcwd()
     MEIPASS = getattr(sys, '_MEIPASS', EXECUTABLE)
 
     LOAD = MEIPASS
     WRITE = EXECUTABLE
 
-    UTILS_FILE = __file__
 
     @classmethod
     def get(cls, *path, mode=None):

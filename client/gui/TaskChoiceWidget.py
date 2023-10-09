@@ -25,7 +25,7 @@ class TaskChoiceWidget(QWidget, Ui_TaskChoiceWidget):
         self.inputPoints.setRange(1, 2 ** 31 - 1)
 
         self._task: Task | None = None
-        self._task_batch = None
+        self._task_batch: TaskBatch | None = None
         self.set_task_batch(self._task_batch)
         self.update_task()
 
@@ -48,28 +48,32 @@ class TaskChoiceWidget(QWidget, Ui_TaskChoiceWidget):
 
     def set_task_batch(self, task_batch: TaskBatch | None):
         self._task_batch = task_batch
-        for ci in (self.inputProgram, self.inputGroup, self.inputName):
-            ci.setEnabled(task_batch is not None)
-            ci.setMaxCount(0)
-        for ti in (self.inputF, self.inputStart, self.inputEnd):
-            ti.setEnabled(task_batch is None)
+        self.widgetStudent.setEnabled(task_batch is not None)
+        # self.widgetStudent.setHidden(task_batch is None)
+        self.widgetTask.setEnabled(task_batch is None)
         if task_batch is not None:
             self.inputName.setMaxCount(len(task_batch) + 1)
             self.inputName.addItem('')
             for i in task_batch:
                 self.inputName.addItem(i[0])
 
+    def set_task_displayed(self, display: bool):
+        self.widgetTask.setHidden(not display)
+
     def set_task_index(self, n: int):
         if self._task_batch is None:
             raise AppError(f"{self.__class__.__name__} requires defined task batch to set task index.")
         else:
-            task_tuple = self._task_batch[n] if n >= 0 else ('', '', 0, 0)
+            task_tuple = self._task_batch[n] if n >= 0 else ('', '', 0, 0, 0, 0, 0)
             sb = QSignalBlocker(self.inputName)
             self.inputName.setCurrentIndex(n + 1 if n >= 0 else 0)
 
             self.inputF.setText(task_tuple[1])
             self.inputStart.setValue(task_tuple[2])
             self.inputEnd.setValue(task_tuple[3])
+            self.inputPoints.setValue(task_tuple[4])
+            self.inputError.setValue(task_tuple[5])
+            self.inputConfidence.setValue(task_tuple[6])
 
     def task(self) -> Task | None:
         return Task(

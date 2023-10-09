@@ -18,7 +18,7 @@ class STATE(COMMON_STATE):
 class PATH(COMMON_PATH):
     # CONFIG = MEIPASS
 
-    LOAD = COMMON_PATH.LOAD
+    LOAD = join(COMMON_PATH.LOAD, 'client')
     # WRITE = EXECUTABLE
 
     UI = join(LOAD, normpath('gui/UI'))

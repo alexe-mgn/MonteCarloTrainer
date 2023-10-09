@@ -7,12 +7,13 @@ from typing import Self
 from PySide6.QtCore import QSignalBlocker
 from PySide6.QtWidgets import QWidget
 
-from client.task.errors import LaplaceError
+from common.exceptions import AppError
 from common.task.exceptions import TaskError
 from common.task.const import STEP, ERROR, ACTION
 
-from common.exceptions import AppError
+from client.utils import STATE
 from client.task.Task import Task
+from client.task.LaplaceError import LaplaceError
 
 from client.gui.NotifierTaskSession import NotifierTaskSession
 from client.gui.UI.TaskWidget import Ui_TaskWidget
@@ -86,6 +87,9 @@ class TaskWidget(QWidget, Ui_TaskWidget):
 
             ERROR.RESULT: ErrorPaletteController(self.inputIntResult),
             # ERROR.INTEGRAL_WRONG_STEP: None,
+
+            ERROR.ERROR: ErrorPaletteController(self.inputError),
+            # ERROR.ERROR_WRONG_STEP: None
         }
 
         self._rect_power = [0, 0]
@@ -161,7 +165,10 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         self.viewTaskF.setText(task.f_unicode_str())
         self.viewTaskInterval.setText(self.viewTaskInterval.__text.format(
             a=str(task.interval[0]),
-            b=str(task.interval[1])
+            b=str(task.interval[1]),
+            p=str(task.min_points),
+            e=str(task.error),
+            c=str(task.confidence)
         ))
 
         self._task_session.start()
@@ -378,7 +385,8 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         p = sum(state.point_hits) / len(state.points)
         error_true = p * (1 - p) / (task.error * LaplaceError().get_error(task.confidence)) ** 2
         self.inputError.setRange(1, error_true * 2)
-        self.inputError.setValue(error_true)
+        if STATE.DEBUG:
+            self.inputError.setValue(error_true)
 
     def _show_error_table(self):
         if self._error_table is None:

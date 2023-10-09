@@ -7,7 +7,7 @@ from common.task.const import STEP, ACTION, ERROR, ERRORS, Interval, Point
 from common.task.data import TaskState, TaskStats
 from common.task.exceptions import TaskError
 from client.task.Task import Task
-from client.task.errors import LaplaceError
+from client.task.LaplaceError import LaplaceError
 
 
 class TaskSession:

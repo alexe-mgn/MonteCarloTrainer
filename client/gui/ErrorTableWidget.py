@@ -1,17 +1,18 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QTableWidget, QTableWidgetItem
+from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QVBoxLayout
 
 from common.task.data import TaskState
-from client.task.errors import LaplaceError
+from client.task.LaplaceError import LaplaceError
 
 
 class ErrorTableWidget(QTableWidget):
 
     def __init__(self, center_key: float, rows=10, cols=2, dev: float = 0.1):
         super().__init__()
+        self.setSizeAdjustPolicy(self.SizeAdjustPolicy.AdjustToContents)
         self.setRowCount(rows)
         self.setColumnCount(2 * cols)
-        self.setHorizontalHeaderLabels(['Доверительный\nинтервал', 'Обратное\nраспределение\nЛапласа'] * cols)
+        self.setHorizontalHeaderLabels(['Доверительный\nинтервал', 'Значение'] * cols)
         for n, (key, value) in enumerate(LaplaceError().get_table(center_key, dev=dev, n=rows*cols)):
             row = n % rows
             col = n // rows

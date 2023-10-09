@@ -73,7 +73,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Используя метод Монте-Карло приблизительно вычислите её определённый интеграл на отрезке [{a}, {b}].&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Используя метод Монте-Карло приблизительно вычислите её определённый интеграл на отрезке [{a}, {b}] с помощью хотя бы {p} точек.&lt;/p&gt;&lt;p&gt;Подсчитайте количество точек, необходимое для вычисления этого значения с погрешностью {e} при доверительном интервале {c}.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="textFormat">
            <enum>Qt::RichText</enum>
@@ -498,7 +498,11 @@
            </widget>
           </item>
           <item row="7" column="1">
-           <widget class="QSpinBox" name="inputError"/>
+           <widget class="QSpinBox" name="inputError">
+            <property name="autoFillBackground">
+             <bool>true</bool>
+            </property>
+           </widget>
           </item>
           <item row="7" column="0">
            <widget class="QLabel" name="labelError">

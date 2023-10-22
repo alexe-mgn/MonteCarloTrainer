@@ -387,17 +387,17 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         task = self._task_session.task
         state = self._task_session.state
         p = sum(state.point_hits) / len(state.points)
-        error_true = p * (1 - p) / (task.error * LaplaceError().get_error(task.confidence)) ** 2
+        error_true = p * (1 - p) / (task.error * LaplaceError().get_inverse(task.confidence)) ** 2
         self.inputError.setRange(1, error_true * 2)
         if STATE.DEBUG:
             self.inputError.setValue(error_true)
 
     def _show_error_table(self):
         if self._error_table is None:
-            self._error_table = ErrorTableWidget(self._task_session.task.confidence, rows=20, cols=2, dev=0.2)
+            self._error_table = ErrorTableWidget()
         self._error_table.show()
         self._error_table.adjustSize()
-        self._error_table.resize(self._error_table.sizeHint())
+        self._error_table.resize(self._error_table.sizeHint() / 2)
 
     @check_error
     def _error_complete(self):

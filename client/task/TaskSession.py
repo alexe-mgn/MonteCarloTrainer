@@ -14,7 +14,6 @@ class TaskSession:
     _RESOLUTION = 1000
 
     accuracy = 0.05
-    # y_accuracy = 0.1
 
     def __init__(self, task: Task):
         self._task = task
@@ -268,7 +267,7 @@ class TaskSession:
     def set_error(self, error: int):
         state = self._state
         p = sum(state.point_hits) / len(state.points)
-        error_true = p * (1 - p) / (self._task.error * LaplaceError().get_error(self._task.confidence)) ** 2
+        error_true = p * (1 - p) / (self._task.error * LaplaceError().get_inverse(self._task.confidence)) ** 2
         if not self.compare(error, error_true):
             raise TaskError(ERRORS.ERROR.ERROR)
         else:

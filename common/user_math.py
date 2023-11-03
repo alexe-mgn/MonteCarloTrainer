@@ -17,8 +17,8 @@ def round_meaning(x: float, dec: int, frac_only: bool = True):
     return round(x, meaning_decimals(x, dec=dec, frac_only=frac_only))
 
 
-def compare_decimals(x: float, y: float, dec: int):
-    return round(x, dec) == round(y, dec)
+# def compare_decimals(x: float, y: float, dec: int):
+#     return round(x, dec) == round(y, dec)
 
 
 def compare_meaning(x: float, y: float, dec: int, frac_only: bool = True):

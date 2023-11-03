@@ -255,7 +255,7 @@ class TaskSession:
         area = (state.int_x[1] - state.int_x[0]) * (state.int_y[1] - state.int_y[0])
         area_neg = (state.int_x[1] - state.int_x[0]) * max(0.0, -state.int_y[0])
         res_true = area * (sum(state.point_hits) / len(state.points)) - area_neg
-        if not user_math.compare_decimals(res, res_true, self.dec_accuracy):
+        if not user_math.compare_meaning(res, res_true, self.dec_accuracy):
             raise TaskError(ERRORS.INTEGRAL.RESULT)
         else:
             state.result = res

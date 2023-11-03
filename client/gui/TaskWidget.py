@@ -389,8 +389,6 @@ class TaskWidget(QWidget, Ui_TaskWidget):
 
         p = sum(state.point_hits) / len(state.points)
         error_true = p * (1 - p) / (task.error * session.laplace.get_inverse(task.confidence)) ** 2
-        a, b = session.laplace.get_table_inverse(task.confidence)
-        print(p * (1 - p) / (task.error * b) ** 2, p * (1 - p) / (task.error * a) ** 2)
         self.inputError.setRange(1, error_true * 2)
         if STATE.DEBUG:
             self.inputError.setValue(error_true)

@@ -366,7 +366,7 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         area = (int_x[1] - int_x[0]) * (int_y[1] - int_y[0])
         np = len(state.points)
         nph = sum(state.point_hits)
-        negative = (int_x[1] - int_x[0]) * min(-int_y[0], 0)
+        negative = (int_x[1] - int_x[0]) * -min(int_y[0], 0)
         res = area * (nph / np) - negative
         self.inputIntResult.setDecimals(user_math.meaning_decimals(res, ts.dec_accuracy))
         self.inputIntResult.setRange(-res * self.INPUT_BUFFER, +res * self.INPUT_BUFFER)

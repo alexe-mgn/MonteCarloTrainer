@@ -1,19 +1,20 @@
 from typing import Self
 import functools
 
+import math
 import time
 
 from common.task.const import STEP, ACTION, ERROR, ERRORS, Interval, Point
 from common.task.data import TaskState, TaskStats
 from common.task.exceptions import TaskError
 from client.task.Task import Task
-from client.task.LaplaceError import LaplaceError
+from common import user_math
 
 
 class TaskSession:
-    _RESOLUTION = 1000
+    _RESOLUTION = 10000
 
-    accuracy = 0.05
+    dec_accuracy = 3
 
     def __init__(self, task: Task):
         self._task = task
@@ -22,7 +23,7 @@ class TaskSession:
         self._f_max = None
         start = self._task.interval[0]
         dist = self._task.interval[1] - self._task.interval[0]
-        for i in range(self._RESOLUTION):
+        for i in range(self._RESOLUTION + 1):
             x = start + dist * (i / self._RESOLUTION)
             y = self.task.f(x)
             if self._f_min is None or y < self._f_min:
@@ -32,6 +33,7 @@ class TaskSession:
 
         self._state = self._create_state()
         self._stats = self._create_stats()
+        self.laplace = user_math.LaplaceError(rows=36)
 
     def _create_state(self) -> TaskState:
         return TaskState()
@@ -58,9 +60,6 @@ class TaskSession:
         :return:
         """
         return self._stats
-
-    def compare(self, trying: float, correct: float):
-        return abs(correct - trying) / abs(correct) <= self.accuracy if correct != 0 else trying == correct
 
     @property
     def f_min(self):
@@ -187,9 +186,9 @@ class TaskSession:
     @_action(ACTION.X_0 | ACTION.X_1)
     def set_int_x(self, interval: Interval):
         error = TaskError()
-        if interval[0] != self._task.interval[0]:
+        if not user_math.compare_meaning(interval[0], self._task.interval[0], self.dec_accuracy):
             error |= ERRORS.RECT.X_0
-        if interval[1] != self._task.interval[1]:
+        if not user_math.compare_meaning(interval[1], self._task.interval[1], self.dec_accuracy):
             error |= ERRORS.RECT.X_1
         if error:
             raise error
@@ -200,12 +199,11 @@ class TaskSession:
     @_action(ACTION.Y_0 | ACTION.Y_1)
     def set_int_y(self, interval: Interval):
         error = TaskError()
-        y_allowed_error = (self._f_max - self._f_min) * self.accuracy
         y_min = min(self._f_min, 0)
-        if not y_min - y_allowed_error <= interval[0] <= y_min:
+        if not (interval[0] <= y_min and user_math.compare_meaning(interval[0], y_min, self.dec_accuracy)):
             error |= ERRORS.RECT.Y_0
         y_max = max(self._f_max, 0)
-        if not y_max <= interval[1] <= y_max + y_allowed_error:
+        if not (y_max <= interval[1] and user_math.compare_meaning(interval[1], y_max, self.dec_accuracy)):
             error |= ERRORS.RECT.Y_1
         if error:
             raise error
@@ -257,7 +255,7 @@ class TaskSession:
         area = (state.int_x[1] - state.int_x[0]) * (state.int_y[1] - state.int_y[0])
         area_neg = (state.int_x[1] - state.int_x[0]) * max(0.0, -state.int_y[0])
         res_true = area * (sum(state.point_hits) / len(state.points)) - area_neg
-        if not self.compare(res, res_true):
+        if not user_math.compare_decimals(res, res_true, self.dec_accuracy):
             raise TaskError(ERRORS.INTEGRAL.RESULT)
         else:
             state.result = res
@@ -267,8 +265,10 @@ class TaskSession:
     def set_error(self, error: int):
         state = self._state
         p = sum(state.point_hits) / len(state.points)
-        error_true = p * (1 - p) / (self._task.error * LaplaceError().get_inverse(self._task.confidence)) ** 2
-        if not self.compare(error, error_true):
+        k = p * (1 - p) / self._task.error ** 2
+        a, b = self.laplace.get_table_inverse(self._task.confidence)
+        margin = (math.floor(k / b ** 2), math.ceil(k / a ** 2))
+        if not margin[0] <= error <= margin[1]:
             raise TaskError(ERRORS.ERROR.ERROR)
         else:
             state.error = error

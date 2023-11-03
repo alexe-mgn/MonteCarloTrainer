@@ -14,7 +14,7 @@ from common.task.const import STEP, ERROR, ACTION
 
 from client.utils import STATE
 from client.task.Task import Task
-from client.task.LaplaceError import LaplaceError
+from common import user_math
 
 from client.gui.NotifierTaskSession import NotifierTaskSession
 from client.gui.UI.TaskWidget import Ui_TaskWidget
@@ -260,15 +260,16 @@ class TaskWidget(QWidget, Ui_TaskWidget):
             dist = interval[1] - interval[0]
             margin = self.RECT_ALLOWED_DISTANCE * dist
             margin_interval = (interval[0] - margin, interval[1] + margin)
-            power = int(math.ceil(math.log10(dist) if dist > 0 else 0)) - 1
-            while any(abs(round(e, -power) - e) >= dist * ts.accuracy for e in interval):
-                power -= 1
-            self._rect_power[n] = power
-            center = round((interval[0] + interval[1]) / 2, -power)
+            power = user_math.meaning_power(dist)
+            decimals = min(user_math.meaning_decimals(e, ts.dec_accuracy) for e in interval)
+            while not all(user_math.compare_meaning(round(e, decimals), e, ts.dec_accuracy) for e in interval):
+                decimals += 1
+            self._rect_power[n] = decimals
+            center = round((interval[0] + interval[1]) / 2, decimals)
             for inp in inputs:
-                inp.setDecimals(max(0, -power + 1))
+                inp.setDecimals(decimals)
                 inp.setRange(*margin_interval)
-                inp.setSingleStep(round(10 ** power, -power))
+                inp.setSingleStep(10 ** power)
                 inp.setValue(center)
 
         self._update_plot()
@@ -307,9 +308,8 @@ class TaskWidget(QWidget, Ui_TaskWidget):
                 self._rect_power,
                 ((self.inputRectX1, self.inputRectX2), (self.inputRectY1, self.inputRectY2))
         ):
-            p_r = 3 - p
             for inp in inputs:
-                inp.setValue(round(inp.value(), p_r))
+                inp.setValue(round(inp.value(), p))
 
     @check_error
     def _rect_complete(self):
@@ -360,13 +360,15 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         self._integral_init()
 
     def _integral_init(self):
-        state = self._task_session.state
+        ts = self._task_session
+        state = ts.state
         int_x, int_y = state.int_x, state.int_y
         area = (int_x[1] - int_x[0]) * (int_y[1] - int_y[0])
         np = len(state.points)
         nph = sum(state.point_hits)
         negative = (int_x[1] - int_x[0]) * min(-int_y[0], 0)
         res = area * (nph / np) - negative
+        self.inputIntResult.setDecimals(user_math.meaning_decimals(res, ts.dec_accuracy))
         self.inputIntResult.setRange(-res * self.INPUT_BUFFER, +res * self.INPUT_BUFFER)
 
     @check_error
@@ -377,27 +379,29 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         self._error_init()
 
     def _error_init(self):
-        state = self._task_session.state
-        task = self._task_session.task
+        session = self._task_session
+        state = session.state
+        task = session.task
 
         self.viewErrorP.setText(f'{sum(state.point_hits) / len(state.points):.3g}')
         self.viewErrorConfidence.setText(f'{task.confidence:.3g}')
         self.viewErrorError.setText(f'{task.error:.3g}')
 
-        task = self._task_session.task
-        state = self._task_session.state
         p = sum(state.point_hits) / len(state.points)
-        error_true = p * (1 - p) / (task.error * LaplaceError().get_inverse(task.confidence)) ** 2
+        error_true = p * (1 - p) / (task.error * session.laplace.get_inverse(task.confidence)) ** 2
+        a, b = session.laplace.get_table_inverse(task.confidence)
+        print(p * (1 - p) / (task.error * b) ** 2, p * (1 - p) / (task.error * a) ** 2)
         self.inputError.setRange(1, error_true * 2)
         if STATE.DEBUG:
             self.inputError.setValue(error_true)
 
     def _show_error_table(self):
         if self._error_table is None:
-            self._error_table = ErrorTableWidget()
+            self._error_table = ErrorTableWidget(self._task_session.laplace)
         self._error_table.show()
         self._error_table.adjustSize()
         self._error_table.resize(self._error_table.sizeHint() / 2)
+        self._error_table.activateWindow()
 
     @check_error
     def _error_complete(self):

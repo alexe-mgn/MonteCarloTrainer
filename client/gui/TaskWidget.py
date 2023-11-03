@@ -269,7 +269,7 @@ class TaskWidget(QWidget, Ui_TaskWidget):
             for inp in inputs:
                 inp.setDecimals(decimals)
                 inp.setRange(*margin_interval)
-                inp.setSingleStep(10 ** power)
+                inp.setSingleStep(10 ** -decimals)
                 inp.setValue(center)
 
         self._update_plot()
@@ -369,7 +369,8 @@ class TaskWidget(QWidget, Ui_TaskWidget):
         negative = (int_x[1] - int_x[0]) * -min(int_y[0], 0)
         res = area * (nph / np) - negative
         self.inputIntResult.setDecimals(user_math.meaning_decimals(res, ts.dec_accuracy))
-        self.inputIntResult.setRange(-res * self.INPUT_BUFFER, +res * self.INPUT_BUFFER)
+        buffer = abs(res) * self.INPUT_BUFFER
+        self.inputIntResult.setRange(-buffer, +buffer)
 
     @check_error
     def _integral_complete(self):

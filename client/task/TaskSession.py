@@ -266,7 +266,7 @@ class TaskSession:
         state = self._state
         p = sum(state.point_hits) / len(state.points)
         k = p * (1 - p) / self._task.error ** 2
-        a, b = self.laplace.get_table_inverse(self._task.confidence)
+        a, b = sorted(self.laplace.get_table_inverse(self._task.confidence))
         margin = (math.floor(k / b ** 2), math.ceil(k / a ** 2))
         if not margin[0] <= error <= margin[1]:
             raise TaskError(ERRORS.ERROR.ERROR)
